@@ -1,0 +1,5 @@
+rootProject.name = 'micro-service'
+
+include 'core-module'
+include 'user-module'
+include 'product_module'
