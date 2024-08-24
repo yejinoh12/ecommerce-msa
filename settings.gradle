@@ -1,1 +1,5 @@
 rootProject.name = 'ecommerce-msa'
+
+include 'common'
+include 'user-service'
+include 'product-service'
