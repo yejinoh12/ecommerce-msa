@@ -1,14 +1,14 @@
 package com.productservice.service;
 
 import com.common.dto.ApiResponse;
-import com.productservice.domain.Product;
-import com.productservice.domain.ProductGroup;
-import com.productservice.domain.ProductOption;
-import com.productservice.dto.ProductDetailsDto;
-import com.productservice.dto.ProductGroupListDto;
-import com.productservice.repository.ProductGroupRepository;
-import com.productservice.repository.ProductOptionRepository;
-import com.productservice.repository.ProductRepository;
+import com.productservice.domain.product.Product;
+import com.productservice.domain.product.ProductGroup;
+import com.productservice.domain.product.ProductOption;
+import com.productservice.dto.product.ProductDetailsDto;
+import com.productservice.dto.product.ProductGroupListDto;
+import com.productservice.repository.product.ProductGroupRepository;
+import com.productservice.repository.product.ProductOptionRepository;
+import com.productservice.repository.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -72,5 +72,4 @@ public class ProductService {
 
         return ApiResponse.ok(200,"제품 상세 조회 성공", productDetailsDto);
     }
-
 }

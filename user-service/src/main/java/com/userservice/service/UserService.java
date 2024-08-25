@@ -31,7 +31,6 @@ public class UserService {
         }
 
         //이메일 인증 기능 (구현 예정)
-
         User user = User.builder()
                 .name(AesUtil.encrypt(signUpRequestDto.getName()))
                 .password(passwordEncoder.encode(signUpRequestDto.getPassword()))
@@ -57,7 +56,7 @@ public class UserService {
         UserResponseDto userResponseDto = UserResponseDto.builder()
                 .name(AesUtil.decrypt(user.getName()))
                 .email(AesUtil.decrypt(user.getEmail()))
-                .phoneNumber(AesUtil.decrypt(user.getPhoneNumber()))
+                //.phoneNumber(AesUtil.decrypt(user.getPhoneNumber()))
                 .address(AesUtil.decrypt(user.getAddress()))
                 .createdAt(user.getCreatedAt())
                 .modifiedAt(user.getModifiedAt())

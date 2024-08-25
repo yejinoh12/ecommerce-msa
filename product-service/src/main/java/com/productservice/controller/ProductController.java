@@ -1,13 +1,13 @@
 package com.productservice.controller;
 
+import com.common.utils.ParseRequestUtil;
+import com.productservice.dto.cart.CartAddDto;
 import com.productservice.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/product")
@@ -27,10 +27,5 @@ public class ProductController {
     public ResponseEntity<?> getProductDetailsWithOption( @PathVariable("productId") Long productId){
         return ResponseEntity.status(HttpStatus.OK).body(productService.getProductDetailsWithOption(productId));
     }
-
-    //장바구니 담기
-
-
-    //장바구니 조회
 
 }

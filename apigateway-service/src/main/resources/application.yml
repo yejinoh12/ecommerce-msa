@@ -16,16 +16,37 @@ spring:
   cloud:
     gateway:
         routes:
+        # user-service
+        #login
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+          - Path=/user/login
+          - Method=POST
+
+        #signup
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+          - Path=/user/signup
+          - Method=POST
+
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
           - Path=/user/**
+          - Method=GET
           filters:
-            - name : JwtFilter
+          - name: JwtFilter
+
+        #product-service
         - id: PRODUCT-SERVICE
           uri: lb://PRODUCT-SERVICE
           predicates:
-          - Path=/product/**
+            - Path=/cart/**
+          filters:
+            - name: JwtFilter
+
 
 jwt:
   secret:

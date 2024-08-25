@@ -1,4 +1,4 @@
-package com.productservice.dto;
+package com.productservice.dto.product;
 
 import lombok.Builder;
 import lombok.Getter;

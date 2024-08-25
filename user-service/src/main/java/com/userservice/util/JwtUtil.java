@@ -31,8 +31,8 @@ public class JwtUtil {
     public static final String AUTHORIZATION_KEY = "auth";                 // 사용자 권한 값의 KEY
     public static final String BEARER_PREFIX = "Bearer ";                  // Token 식별자
 
-    private final long jwtExpiration = 30 * 60 * 1000L;                    //test 30m
-    private final long refreshTokenExpiration = 60 * 60 * 1000L;;          //test 60m
+    private final long jwtExpiration = 24 * 60 * 60 * 1000L;          // 1일 (24시간)
+    private final long refreshTokenExpiration = 14 * 24 * 60 * 60 * 1000L; // 2주 (14일)
 
     @Value("${jwt.secret.key}")                                           // Base64 Encode 한 SecretKey
     private String secretKey;

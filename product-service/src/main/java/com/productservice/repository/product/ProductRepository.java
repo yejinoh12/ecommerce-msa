@@ -1,6 +1,6 @@
-package com.productservice.repository;
+package com.productservice.repository.product;
 
-import com.productservice.domain.Product;
+import com.productservice.domain.product.Product;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
