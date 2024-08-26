@@ -7,8 +7,6 @@ import java.util.List;
 
 @Entity
 @Getter
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
 public class ProductGroup {
 

@@ -14,7 +14,7 @@ public class CartItemDto {
     private Long c_item_id;
     private Long p_id;
     private String p_name;
-    private String opt;
+    private Map<Long, String> opt;
     private int price;
     private int cnt;
 

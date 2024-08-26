@@ -1,5 +1,9 @@
 rootProject.name = 'ecommerce-msa'
 
+include 'apigateway-service'
+include 'discovery-service'
+
 include 'common'
 include 'user-service'
 include 'product-service'
+include 'order-service'

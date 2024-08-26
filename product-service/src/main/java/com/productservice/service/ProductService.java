@@ -1,6 +1,9 @@
 package com.productservice.service;
 
 import com.common.dto.ApiResponse;
+import com.common.dto.order.DecreaseStockReqDto;
+import com.common.dto.order.IncreaseStockReqDto;
+import com.common.dto.product.ProductInfoDto;
 import com.productservice.domain.product.Product;
 import com.productservice.domain.product.ProductGroup;
 import com.productservice.domain.product.ProductOption;
@@ -10,11 +13,14 @@ import com.productservice.repository.product.ProductGroupRepository;
 import com.productservice.repository.product.ProductOptionRepository;
 import com.productservice.repository.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -71,5 +77,55 @@ public class ProductService {
                 .build();
 
         return ApiResponse.ok(200,"제품 상세 조회 성공", productDetailsDto);
+    }
+
+    // 재고 감소
+    @Transactional
+    public void decreaseStock(List<DecreaseStockReqDto> decreaseStockReqDtos) {
+
+
+        log.info("재고 감소 로직 시작");
+        log.info("decreaseStockReqDto.get(0).getProductOptionId() = {}", decreaseStockReqDtos.get(0).getProductOptionId());
+
+        for (DecreaseStockReqDto dto : decreaseStockReqDtos) {
+            log.info("order-service request / 재고 = {}", dto.getProductOptionId().toString());
+            ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
+
+            productOption.decreaseStock(dto.getQuantity()); // 변경 감지 -> 자동으로 업데이트
+        }
+
+
+        log.info("재고 감소 로직 완료");
+    }
+
+
+    // 재고 증가
+    @Transactional
+    public void increaseStock(List<IncreaseStockReqDto> increaseStockRequestDtos) {
+        for (IncreaseStockReqDto dto : increaseStockRequestDtos) {
+            ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
+                    .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
+
+            productOption.increaseStock(dto.getQuantity());
+        }
+    }
+
+    public List<ProductInfoDto> getProductInfos(List<Long> productOptionIds) {
+
+        List<ProductOption> productOptions = productOptionRepository.findWithProductAndGroupById(productOptionIds);
+
+        if (productOptions.isEmpty()) {
+            throw new NoSuchElementException("상품 옵션을 찾을 수 없습니다.");
+        }
+
+        //ProductInfoDto
+        return productOptions.stream()
+                .map(productOption -> new ProductInfoDto(
+                        productOption.getId(),
+                        productOption.getProduct().getProductGroup().getGroupName() + "-" + productOption.getProduct().getTag(),
+                        productOption.getOptionName()
+                ))
+                .collect(Collectors.toList());
     }
 }

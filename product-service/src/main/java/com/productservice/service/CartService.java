@@ -1,6 +1,7 @@
 package com.productservice.service;
 
 import com.common.dto.ApiResponse;
+import com.common.dto.order.CreateOrderReqDto;
 import com.productservice.domain.cart.Cart;
 import com.productservice.domain.cart.CartItem;
 import com.productservice.domain.product.ProductOption;
@@ -11,13 +12,16 @@ import com.productservice.repository.cart.CartItemRepository;
 import com.productservice.repository.cart.CartRepository;
 import com.productservice.repository.product.ProductOptionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -78,7 +82,7 @@ public class CartService {
         return getMyCart(userId);
     }
 
-    //장바구니 삭제
+    //장바구니 수량 감소
     public ApiResponse<CartDto> decreaseCartItem(Long cartItemId, Long userId) {
 
         CartItem cartItem = cartItemRepository.findById(cartItemId)
@@ -97,6 +101,7 @@ public class CartService {
             cartItem.subCount(1);
             cartItemRepository.save(cartItem);
         }else{
+
             cartItemRepository.delete(cartItem);
         }
 
@@ -104,9 +109,15 @@ public class CartService {
     }
 
     //장바구니 전체 삭제
-    public ApiResponse<CartDto> makeEmptyCart(Long userId) {
-        Cart cart = cartRepository.findById(userId).orElse(null);      // 빈 카트 반환
+    public ApiResponse<CartDto> clearCart(Long userId) {
+
+        Cart cart = cartRepository.findByUserId(userId)
+              .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+
+        cartItemRepository.deleteByCartId(cart.getId());
         cartRepository.delete(cart);
+
+
         return getMyCart(userId);
     }
 
@@ -124,7 +135,7 @@ public class CartService {
                         .p_id(item.getProductOption().getId())
                         .p_name(item.getProductOption().getProduct().getProductGroup().getGroupName() + "-" + item.getProductOption().getProduct().getTag())
                         .price(item.getProductOption().getProduct().getProductGroup().getPrice())
-                        .opt(item.getProductOption().getOptionName())
+                        .opt(Map.of(item.getProductOption().getId(), item.getProductOption().getOptionName()))
                         .cnt(item.getCount())
                         .build())
 
@@ -137,4 +148,29 @@ public class CartService {
 
         return ApiResponse.ok(200,"장바구니 조회 성공", cartDto);
     }
+
+    public List<CreateOrderReqDto> getCartItemsForOrder(Long userId) {
+
+        log.info("order-service 장바구니 조회/삭제 요청");
+
+        Cart cart = cartRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+
+        List<CartItem> cartItems = cartItemRepository.findByCartIdWithProductGroup(cart.getId());
+
+        List<CreateOrderReqDto> orderReqDtos = cartItems.stream()
+                .map(item -> new CreateOrderReqDto(
+                        item.getProductOption().getId(),
+                        item.getCount(),
+                        item.getProductOption().getProduct().getProductGroup().getPrice()
+                ))
+                .collect(Collectors.toList());
+
+        clearCart(userId);
+
+        log.info("order-service 장바구니 조회/삭제 완료");
+
+        return orderReqDtos;
+    }
+
 }

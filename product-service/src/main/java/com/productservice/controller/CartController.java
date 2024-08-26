@@ -1,5 +1,6 @@
 package com.productservice.controller;
 
+import com.common.dto.order.CreateOrderReqDto;
 import com.common.utils.ParseRequestUtil;
 import com.productservice.dto.cart.CartAddDto;
 import com.productservice.service.CartService;
@@ -9,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -24,32 +27,38 @@ public class CartController {
         return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addCartItem(cartAddDto, userId));
     }
 
-    //상품 수량 증가
+    //장바구니 상품 수량 증가
     @GetMapping("/increase/{cart_item_id}")
     public ResponseEntity<?> incrementCartItem(@PathVariable("cart_item_id") Long cartItemId, HttpServletRequest request){
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.incrementCartItem(cartItemId, userId));
+        return ResponseEntity.ok(cartService.incrementCartItem(cartItemId, userId));
     }
 
-    //상품 수량 감소
+    //장바구니 상품 수량 감소
     @GetMapping("/decrease/{cart_item_id}")
     public ResponseEntity<?> decrementCartItem(@PathVariable("cart_item_id") Long cartItemId, HttpServletRequest request){
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.decreaseCartItem(cartItemId, userId));
+        return ResponseEntity.ok(cartService.decreaseCartItem(cartItemId, userId));
     }
 
     //장바구니 비우기
-    @GetMapping("/empty")
-    public ResponseEntity<?> makeEmptyCart(HttpServletRequest request){
+    @GetMapping("/clear")
+    public ResponseEntity<?> clearCart(HttpServletRequest request){
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.makeEmptyCart(userId));
+        return ResponseEntity.ok(cartService.clearCart(userId));
     }
 
     //장바구니 조회
     @GetMapping
     public ResponseEntity<?> getMyCart(HttpServletRequest request){
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        return ResponseEntity.status(HttpStatus.OK).body(cartService.getMyCart(userId));
+        return ResponseEntity.ok(cartService.getMyCart(userId));
+    }
+
+    //order-service 에서 회원 장바구니 조회
+    @GetMapping("/{userId}/orders")
+    public ResponseEntity<List<CreateOrderReqDto>> getCartItems(@PathVariable("userId") Long userId){
+        return ResponseEntity.ok(cartService.getCartItemsForOrder(userId));
     }
 
 }

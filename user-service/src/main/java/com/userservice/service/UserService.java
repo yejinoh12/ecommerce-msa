@@ -1,6 +1,7 @@
 package com.userservice.service;
 
 import com.common.dto.ApiResponse;
+import com.common.dto.user.UserInfoDto;
 import com.userservice.entity.User;
 import com.userservice.entity.UserRoleEnum;
 import com.userservice.dto.SignUpRequestDto;
@@ -12,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import static com.common.dto.user.UserInfoDto.*;
 
 @Slf4j
 @Service
@@ -63,6 +66,22 @@ public class UserService {
                 .build();
 
         return ApiResponse.ok(200,"회원 조회 성공", userResponseDto);
+    }
+
+    //주문 서비스에서 유저 정보 조회
+    public UserInfoDto getUserInfo(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("없는 사용자 입니다."));
+
+        log.info(user.getPhoneNumber());
+
+        return builder()
+                .name(AesUtil.decrypt(user.getName()))
+                .email(AesUtil.decrypt(user.getEmail()))
+                //.phoneNumber("dd")
+                .address(AesUtil.decrypt(user.getAddress()))
+                .build();
     }
 
 }

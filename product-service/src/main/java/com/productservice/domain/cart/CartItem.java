@@ -6,8 +6,6 @@ import lombok.*;
 
 @Entity
 @Getter
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class CartItem {
 
@@ -16,6 +14,7 @@ public class CartItem {
     @Column(name = "cart_item_id")
     private Long id;
 
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cart")
     private Cart cart;
@@ -24,7 +23,15 @@ public class CartItem {
     @JoinColumn(name = "product_option_id")
     private ProductOption productOption;
 
-    private int count; //수량
+    @Column(nullable = false)
+    private int count;
+
+    @Builder
+    public CartItem(Cart cart,ProductOption productOption, int count) {
+        this.cart = cart;
+        this.productOption = productOption;
+        this.count = count;
+    }
 
     public void addCount(int cnt) {
         this.count += cnt;

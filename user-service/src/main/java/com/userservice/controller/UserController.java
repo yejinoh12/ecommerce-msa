@@ -1,6 +1,6 @@
 package com.userservice.controller;
 
-
+import com.common.dto.user.UserInfoDto;
 import com.common.utils.ParseRequestUtil;
 import com.userservice.dto.SignUpRequestDto;
 import com.userservice.service.UserService;
@@ -8,6 +8,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -24,9 +26,15 @@ public class UserController {
     }
 
     //마이페이지
-    @GetMapping("/profile")
+    @GetMapping("/info")
     public ResponseEntity<?> myPage(HttpServletRequest request){
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        return ResponseEntity.status(HttpStatus.OK).body(userService.myPage(userId));
+        return ResponseEntity.ok(userService.myPage(userId));
+    }
+
+    //유저 ID로 유저 정보 조회
+    @GetMapping("/info-order")
+    public ResponseEntity<UserInfoDto> getUserInfo(@AuthenticationPrincipal UserDetails userDetails){
+        return ResponseEntity.ok(userService.getUserInfo(userDetails.getUsername()));
     }
 }

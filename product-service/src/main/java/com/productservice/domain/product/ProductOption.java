@@ -5,8 +5,6 @@ import lombok.*;
 
 @Entity
 @Getter
-@Builder
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProductOption {
 
@@ -27,17 +25,14 @@ public class ProductOption {
 
     //재고 감소 메서드 (주문 시)
     public void decreaseStock(int quantity) {
-
         if (this.stock < quantity) {
             throw new IllegalArgumentException("재고가 부족합니다.");
         }
-
         this.stock -= quantity;
     }
 
     // 재고 증가 메서드 (주문 취소/반품 시)
-    public void addStock(int quantity) {
+    public void increaseStock(int quantity) {
         this.stock += quantity;
     }
-
 }

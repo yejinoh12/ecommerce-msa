@@ -35,7 +35,6 @@ spring:
           uri: lb://USER-SERVICE
           predicates:
           - Path=/user/**
-          - Method=GET
           filters:
           - name: JwtFilter
 
@@ -43,7 +42,20 @@ spring:
         - id: PRODUCT-SERVICE
           uri: lb://PRODUCT-SERVICE
           predicates:
+            - Path=/product/**
+
+        - id: PRODUCT-SERVICE
+          uri: lb://PRODUCT-SERVICE
+          predicates:
             - Path=/cart/**
+          filters:
+            - name: JwtFilter
+
+        #order-service
+        - id: ORDER-SERVICE
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/order/**
           filters:
             - name: JwtFilter
 
