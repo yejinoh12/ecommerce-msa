@@ -12,7 +12,6 @@ import com.orderservice.dto.OrderItemDto;
 import com.orderservice.dto.OrderResDto;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
-import com.orderservice.entity.Payment;
 import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
 import com.orderservice.repository.PaymentRepository;
@@ -55,8 +54,16 @@ public class OrderService {
 
         createOrderItemAndUpdateStock(order, dtos);
 
-        return new ApiResponse<>(201, "주문이 완료되었습니다.",
-                new OrderResDto(order.getId(), userId, order.getCreatedAt(), order.getTotalPrice()));
+        OrderResDto orderResDto = OrderResDto.builder()
+                .orderId(order.getId())
+                .userId(userId)
+                .orderDate(order.getCreatedAt())
+                .totalPrice(order.getTotalPrice())
+                .orderStatus(order.getOrderStatus())
+                .deliveryStatus(order.getDeliveryStatus())
+                .build();
+
+        return new ApiResponse<>(201, "주문이 완료되었습니다.", orderResDto);
     }
 
     /**
@@ -89,6 +96,7 @@ public class OrderService {
         List<DecreaseStockReqDto> decreaseStockReqDtos = new ArrayList<>();
 
         for (CreateOrderReqDto reqDto : orderReqDtos) {
+
             OrderItem orderItem = OrderItem.createOrderItem(
                     order,
                     reqDto.getProductOptionId(),
@@ -112,11 +120,19 @@ public class OrderService {
 
         List<Order> orders = orderRepository.findByUserId(userId);
 
-        List<OrderResDto> orderResDtos= new ArrayList<>();
+        List<OrderResDto> orderResDtos = new ArrayList<>();
 
         for(Order order : orders){
-            OrderResDto orderListDto = new OrderResDto(order.getId(), userId, order.getCreatedAt(), order.getTotalPrice());
-            orderResDtos.add(orderListDto);
+            OrderResDto orderResDto = OrderResDto.builder()
+                    .orderId(order.getId())
+                    .userId(userId)
+                    .orderDate(order.getCreatedAt())
+                    .totalPrice(order.getTotalPrice())
+                    .orderStatus(order.getOrderStatus())
+                    .deliveryStatus(order.getDeliveryStatus())
+                    .build();
+
+            orderResDtos.add(orderResDto);
         }
 
         return ApiResponse.ok(200,"주문 목록 조회 성공", orderResDtos);
@@ -129,7 +145,14 @@ public class OrderService {
                 .orElseThrow(() -> new NoSuchElementException("주문을 찾을 수 없습니다."));
 
 
-        OrderResDto orderResDto = new OrderResDto(order.getId(), userId, order.getCreatedAt(), order.getTotalPrice());
+        OrderResDto orderResDto = OrderResDto.builder()
+                .orderId(order.getId())
+                .userId(userId)
+                .orderDate(order.getCreatedAt())
+                .totalPrice(order.getTotalPrice())
+                .orderStatus(order.getOrderStatus())
+                .deliveryStatus(order.getDeliveryStatus())
+                .build();
 
         log.info("user-service 요청 시작");
         UserInfoDto userInfoDto = userServiceClient.getUserInfo(token);
@@ -143,7 +166,7 @@ public class OrderService {
                 .order_items(orderItemDtos)
                 .build();
 
-        return ApiResponse.ok(200,"장바구니 상세 조회 성공", orderDetailsDto);
+        return ApiResponse.ok(200,"주문 상세 조회 성공", orderDetailsDto);
     }
 
 
@@ -175,5 +198,4 @@ public class OrderService {
                 })
                 .collect(Collectors.toList());
     }
-
 }

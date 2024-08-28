@@ -40,16 +40,17 @@ public class Order extends BaseEntity {
         return new Order(userId, totalPrice, OrderStatus.ORDERED, DeliveryStatus.PENDING);
     }
 
-//    public void cancelOrder() {
-//        this.orderStatus = OrderStatus.CANCELED;
-//        this.deliveryStatus = DeliveryStatus.CANCELED;
-//        for (OrderItem orderItem : orderItems) {
-//            orderItem.cancel();
-//        }
-//    }
+    public void updateStatusToCanceled() {
+        this.orderStatus = OrderStatus.CANCELED;
+        this.deliveryStatus = DeliveryStatus.CANCELED;
+    }
 
-//    public void returnOrder() {
-//        this.orderStatus = OrderStatus.RETURN_ING;
-//        this.deliveryStatus = DeliveryStatus.CANCELED;
-//    }
+    public void updateStatusToReturning() {
+        this.orderStatus = OrderStatus.RETURN_ING;
+        this.deliveryStatus = DeliveryStatus.CANCELED;
+    }
+
+    public void updateStatusToReturned() {
+        this.orderStatus = OrderStatus.RETURNED;
+    }
 }

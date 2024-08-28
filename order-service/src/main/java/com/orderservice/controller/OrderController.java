@@ -1,12 +1,11 @@
 package com.orderservice.controller;
 
-import com.common.dto.ApiResponse;
 import com.common.utils.ParseRequestUtil;
 import com.orderservice.service.OrderService;
+import com.orderservice.service.ReturnAndCancelService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     private final OrderService orderService;
+    private final ReturnAndCancelService returnAndCancelService;
 
     //장바구니에 있는 상품 주문
     @PostMapping
@@ -43,5 +43,17 @@ public class OrderController {
 
         return ResponseEntity.ok(orderService.viewOrderDetails(orderId, userId, token));
 
+    }
+
+    //취소하기
+    @GetMapping("/cancel/{order_id}")
+    public ResponseEntity<?> cancelOrder(@PathVariable("order_id") Long orderId) {
+        return ResponseEntity.ok(returnAndCancelService.cancelOrder(orderId));
+    }
+
+    //반품하기
+    @GetMapping("/return/{order_id}")
+    public ResponseEntity<?> returnOrder(@PathVariable("order_id") Long orderId) {
+        return ResponseEntity.ok(returnAndCancelService.returnOrder(orderId));
     }
 }

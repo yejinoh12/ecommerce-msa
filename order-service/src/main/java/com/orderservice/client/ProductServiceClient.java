@@ -2,6 +2,7 @@ package com.orderservice.client;
 
 import com.common.dto.order.CreateOrderReqDto;
 import com.common.dto.order.DecreaseStockReqDto;
+import com.common.dto.order.IncreaseStockReqDto;
 import com.common.dto.product.ProductInfoDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +17,8 @@ public interface ProductServiceClient {
     List<CreateOrderReqDto> getOrderItems(@PathVariable("userId") Long userId);
 
     // 재고 증가
-//    @PostMapping("/product-options/{productOptionId}/increase-stock")
-//    void increaseStock(@PathVariable("productOptionId") Long productOptionId, @RequestParam("quantity") int quantity);
+    @PostMapping("/product/option-stock/increase")
+    void increaseStock(List<IncreaseStockReqDto> increaseStockRequestDtos);
 
     // 재고 감소
     @PostMapping("/product/option-stock/decrease")
@@ -26,6 +27,5 @@ public interface ProductServiceClient {
     //상품 조회
     @GetMapping("/product/info/{productOptionId}")
     List<ProductInfoDto> getProductInfos(@PathVariable("productOptionId") List<Long> productOptionIds);
-
 
 }

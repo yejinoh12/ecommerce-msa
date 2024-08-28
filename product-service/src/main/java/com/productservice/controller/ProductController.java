@@ -33,8 +33,11 @@ public class ProductController {
     }
 
     // 재고 증가
-    @PostMapping("/increase")
+    @PostMapping("/option-stock/increase")
     public ResponseEntity<Void> increaseStock(@RequestBody List<IncreaseStockReqDto> increaseStockRequestDtos) {
+
+        log.info("order-service 재고 증가 요청");
+
         productService.increaseStock(increaseStockRequestDtos);
         return ResponseEntity.ok().build();
     }
@@ -49,6 +52,7 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
+    //상품 정보
     @GetMapping("/info/{productOptionId}")
     public List<ProductInfoDto> getProductInfos(@PathVariable("productOptionId") List<Long> productOptionIds) {
         return productService.getProductInfos(productOptionIds);

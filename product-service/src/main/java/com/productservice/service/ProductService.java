@@ -88,7 +88,6 @@ public class ProductService {
         log.info("decreaseStockReqDto.get(0).getProductOptionId() = {}", decreaseStockReqDtos.get(0).getProductOptionId());
 
         for (DecreaseStockReqDto dto : decreaseStockReqDtos) {
-            log.info("order-service request / 재고 = {}", dto.getProductOptionId().toString());
             ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
 
@@ -102,15 +101,22 @@ public class ProductService {
 
     // 재고 증가
     @Transactional
-    public void increaseStock(List<IncreaseStockReqDto> increaseStockRequestDtos) {
-        for (IncreaseStockReqDto dto : increaseStockRequestDtos) {
+    public void increaseStock(List<IncreaseStockReqDto> increaseStockReqDtos) {
+
+        log.info("재고 증가 로직 시작");
+        log.info("increaseStockReqDto.get(0).getProductOptionId() = {}", increaseStockReqDtos.get(0).getProductOptionId());
+
+        for (IncreaseStockReqDto dto : increaseStockReqDtos) {
             ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
                     .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
 
-            productOption.increaseStock(dto.getQuantity());
+            productOption.increaseStock(dto.getQuantity()); // 변경 감지 -> 자동으로 업데이트
         }
+
+        log.info("재고 증가 로직 완료");
     }
 
+    //상품 정보
     public List<ProductInfoDto> getProductInfos(List<Long> productOptionIds) {
 
         List<ProductOption> productOptions = productOptionRepository.findWithProductAndGroupById(productOptionIds);

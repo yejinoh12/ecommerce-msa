@@ -18,7 +18,7 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     Optional<Order> findById(Long Id);
-//    List<Order> findByOrderStatus(OrderStatus orderStatus);
+    List<Order> findByOrderStatus(OrderStatus orderStatus);
     List<Order> findByUserId(Long userId);
 
     @Modifying
