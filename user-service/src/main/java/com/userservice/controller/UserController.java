@@ -6,12 +6,14 @@ import com.userservice.dto.SignUpRequestDto;
 import com.userservice.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/user")
@@ -32,9 +34,9 @@ public class UserController {
         return ResponseEntity.ok(userService.myPage(userId));
     }
 
-    //유저 ID로 유저 정보 조회
+    //order-service 에서 유저 ID로 유저 정보 조회
     @GetMapping("/info-order")
-    public ResponseEntity<UserInfoDto> getUserInfo(@AuthenticationPrincipal UserDetails userDetails){
-        return ResponseEntity.ok(userService.getUserInfo(userDetails.getUsername()));
+    public ResponseEntity<UserInfoDto> getUserInfo(@RequestHeader("X-Claim-userId") Long userId){
+        return ResponseEntity.ok(userService.getUserInfo(userId));
     }
 }

@@ -16,33 +16,28 @@ import org.springframework.web.bind.annotation.*;
 public class OrderController {
 
     private final OrderService orderService;
+    private final ParseRequestUtil parseRequestUtil;
     private final ReturnAndCancelService returnAndCancelService;
 
     //장바구니에 있는 상품 주문
     @PostMapping
     public ResponseEntity<?> order(HttpServletRequest request) {
-        Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
+        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
         return ResponseEntity.ok(orderService.createOrder(userId));
     }
 
     //주문 내역 보기
     @GetMapping("/list")
     public ResponseEntity<?> viewOrderList(HttpServletRequest request) {
-        Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
+        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
         return ResponseEntity.ok(orderService.viewOrderList(userId));
     }
 
     //주문 내역 상세 보기
     @GetMapping("/details/{order_id}")
-    public ResponseEntity<?> viewOrderDetails(@PathVariable("order_id") Long orderId,
-                                                           HttpServletRequest request) {
-
-        Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        String token = new ParseRequestUtil().extractTokenFromRequest(request);
-        log.info("token = {}", token);
-
-        return ResponseEntity.ok(orderService.viewOrderDetails(orderId, userId, token));
-
+    public ResponseEntity<?> viewOrderDetails(@PathVariable("order_id") Long orderId, HttpServletRequest request) {
+        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
+        return ResponseEntity.ok(orderService.viewOrderDetails(orderId, userId));
     }
 
     //취소하기
@@ -56,4 +51,5 @@ public class OrderController {
     public ResponseEntity<?> returnOrder(@PathVariable("order_id") Long orderId) {
         return ResponseEntity.ok(returnAndCancelService.returnOrder(orderId));
     }
+
 }

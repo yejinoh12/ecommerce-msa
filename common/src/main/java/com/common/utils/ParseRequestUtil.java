@@ -1,7 +1,9 @@
 package com.common.utils;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Component;
 
+@Component
 public class ParseRequestUtil {
 
     public Long extractUserIdFromRequest(HttpServletRequest request) {
@@ -20,15 +22,5 @@ public class ParseRequestUtil {
         }
 
         return userId;
-    }
-
-
-    public String extractTokenFromRequest(HttpServletRequest request) {
-        String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("헤더에 유효한 JWT 토큰이 없습니다.");
-        }
-
-        return authorizationHeader;
     }
 }

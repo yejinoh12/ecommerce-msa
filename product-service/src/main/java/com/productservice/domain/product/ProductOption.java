@@ -1,5 +1,6 @@
 package com.productservice.domain.product;
 
+import com.common.exception.BaseBizException;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,7 +27,7 @@ public class ProductOption {
     //재고 감소 메서드 (주문 시)
     public void decreaseStock(int quantity) {
         if (this.stock < quantity) {
-            throw new IllegalArgumentException("재고가 부족합니다.");
+            throw new BaseBizException("재고가 부족으로 주문에 실패했습니다.");
         }
         this.stock -= quantity;
     }

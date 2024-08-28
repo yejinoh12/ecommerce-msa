@@ -1,6 +1,7 @@
 package com.userservice.service;
 
-import com.common.dto.ApiResponse;
+import com.common.exception.BaseBizException;
+import com.common.response.ApiResponse;
 import com.common.dto.user.UserInfoDto;
 import com.userservice.entity.User;
 import com.userservice.entity.UserRoleEnum;
@@ -30,7 +31,7 @@ public class UserService {
         String email = AesUtil.encrypt(signUpRequestDto.getEmail());    //이메일 암호화
 
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new IllegalArgumentException("사용중인 이메일입니다.");  //이메일 중복 검증
+            throw new BaseBizException("사용중인 이메일입니다.");  //이메일 중복 검증
         }
 
         //이메일 인증 기능 (구현 예정)
@@ -52,7 +53,7 @@ public class UserService {
     public ApiResponse<UserResponseDto> myPage(Long userId) {
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new UsernameNotFoundException("없는 사용자 입니다."));
+                .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 사용자를 찾을 수 없습니다."));
 
         log.info(user.getPhoneNumber());
 
@@ -69,10 +70,10 @@ public class UserService {
     }
 
     //주문 서비스에서 유저 정보 조회
-    public UserInfoDto getUserInfo(String email) {
+    public UserInfoDto getUserInfo(Long userId) {
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("없는 사용자 입니다."));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 사용자를 찾을 수 없습니다."));
 
         log.info(user.getPhoneNumber());
 

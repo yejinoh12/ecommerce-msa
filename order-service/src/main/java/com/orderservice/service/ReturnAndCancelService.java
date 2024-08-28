@@ -1,7 +1,7 @@
 package com.orderservice.service;
 
-
-import com.common.dto.ApiResponse;
+import com.common.exception.BaseBizException;
+import com.common.response.ApiResponse;
 import com.common.dto.order.IncreaseStockReqDto;
 import com.orderservice.client.ProductServiceClient;
 import com.orderservice.entity.Order;
@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Slf4j
 @Service
@@ -28,44 +27,45 @@ public class ReturnAndCancelService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
-    //취소하기
+    /**
+     * 주문 취소
+     * 현재 상태가 배송준비(PENDING)일 때만 취소 가능
+     */
     public ApiResponse<?> cancelOrder(Long orderId) {
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));
 
-        //현재 상태가 배송준비(PENDING)일 때만 가능
         if (order.getDeliveryStatus() != (DeliveryStatus.PENDING)) {
-            throw new RuntimeException("취소가 불가능 합니다.");
+            throw new BaseBizException("취소가 불가능 합니다.");
         } else {
-
             List<IncreaseStockReqDto> increaseStockReqDtos = orderItemRepository.findOrderItemDtosByOrderId(orderId);
-            productServiceClient.increaseStock(increaseStockReqDtos);
-            order.updateStatusToCanceled(); // 주문 상태만 반품 진행중으로 변경
-
+            productServiceClient.increaseStock(increaseStockReqDtos);   //재고 복구
+            order.updateStatusToCanceled();                             //상태 변경
         }
+
         return ApiResponse.ok(200, "주문 취소 성공", null);
     }
 
-    //반품하기
+    /**
+     * 반품하기
+     * 배송완료 된 제품만 가능, 배송 완료 후 D+1 까지 반품 가능)
+     */
+
     public ApiResponse<String> returnOrder(Long orderId) {
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new NoSuchElementException("주문 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));
 
         LocalDateTime now = LocalDateTime.now();
-        LocalDateTime returnDeadline = order.getModifiedAt().plusSeconds(24); // 배송 완료 후 D+1(24초)까지 반품 가능
+        LocalDateTime returnDeadline = order.getModifiedAt().plusSeconds(24); //test 24s
 
-        //배송완료 된 제품만 가능, 배송 완료 후 D+1 까지 반품 가능
         if (order.getDeliveryStatus() == DeliveryStatus.DELIVERED && now.isBefore(returnDeadline)) {
-
-            order.updateStatusToReturning(); // 재고 복구 & 주문 상태 변경
-
+            order.updateStatusToReturning(); //상태 변경 (D+1에 반품 진행중 상품에 대해서 스케줄러로 재고 변경 예정)
         }else{
-            throw new RuntimeException("반품 기한이 지났습니다.");
+            throw new BaseBizException("반품이 불가능합니다.");
         }
 
         return ApiResponse.ok(200,"반품 신청 성공", null);
     }
-
 }

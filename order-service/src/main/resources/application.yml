@@ -29,4 +29,5 @@ eureka:
 
 logging:
   level:
-    com.example: debug
+    com.orderservice.client: DEBUG
+

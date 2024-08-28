@@ -15,21 +15,20 @@ spring:
     name: apigateway-service
   cloud:
     gateway:
-        routes:
-        # user-service
-        #login
+
+      default-filters:
+        - name: GlobalFilter
+          args:
+            preLogger: true
+            postLogger: true
+
+      routes:
+        #user-service
         - id: USER-SERVICE
           uri: lb://USER-SERVICE
           predicates:
           - Path=/user/login
-          - Method=POST
-
-        #signup
-        - id: USER-SERVICE
-          uri: lb://USER-SERVICE
-          predicates:
           - Path=/user/signup
-          - Method=POST
 
         - id: USER-SERVICE
           uri: lb://USER-SERVICE

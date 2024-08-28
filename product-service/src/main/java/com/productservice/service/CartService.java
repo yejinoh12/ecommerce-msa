@@ -1,6 +1,7 @@
 package com.productservice.service;
 
-import com.common.dto.ApiResponse;
+import com.common.exception.BaseBizException;
+import com.common.response.ApiResponse;
 import com.common.dto.order.CreateOrderReqDto;
 import com.productservice.domain.cart.Cart;
 import com.productservice.domain.cart.CartItem;
@@ -13,6 +14,7 @@ import com.productservice.repository.cart.CartRepository;
 import com.productservice.repository.product.ProductOptionRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,7 +37,7 @@ public class CartService {
     public ApiResponse<?> addCartItem(CartAddDto cartAddDto, Long userId) {
 
         ProductOption productOption = productOptionRepository.findById(cartAddDto.getOpt())
-                .orElseThrow(() -> new NoSuchElementException("등록된 상품이 없습니다."));
+                .orElseThrow(() -> new BaseBizException("productOptionID가 " + cartAddDto.getOpt() + "인 상품 옵션을 찾을 수 없습니다."));
 
         //카트가 없다면 카트 생성
         Cart cart = cartRepository.findByUserId(userId)
@@ -45,11 +47,8 @@ public class CartService {
         CartItem cartItem = cartItemRepository.findByCartAndProductOption(cart, productOption).orElse(null);
 
         if (cartItem != null) {
-
-            throw new RuntimeException("장바구니에 상품이 존재합니다.");
-
+            throw new BaseBizException("장바구니에 이미 해당 상품이 존재합니다.");
         } else {
-
             cartItem = CartItem.builder()
                     .cart(cart)
                     .productOption(productOption)
@@ -58,7 +57,6 @@ public class CartService {
         }
 
         cartItemRepository.save(cartItem);
-
         return getMyCart(userId);
     }
 
@@ -66,14 +64,14 @@ public class CartService {
     public ApiResponse<?> incrementCartItem(Long cartItemId, Long userId) {
 
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 장바구니 아이템입니다."));
+                .orElseThrow(() -> new BaseBizException("cartItemID가 " + cartItemId + "인 장바구니 아이템을 찾을 수 없습니다."));
 
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("사용자의 장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 장바구니를 찾을 수 없습니다."));
 
         //장바구니 검증
         if (!cartItem.getCart().equals(cart)) {
-            throw new IllegalArgumentException("해당 장바구니에 아이템이 없습니다.");
+            throw new BaseBizException("장바구니에 해당 상품이 없습니다.");
         }
 
         cartItem.addCount(1);
@@ -86,14 +84,14 @@ public class CartService {
     public ApiResponse<CartDto> decreaseCartItem(Long cartItemId, Long userId) {
 
         CartItem cartItem = cartItemRepository.findById(cartItemId)
-                .orElseThrow(() -> new NoSuchElementException("장바구니에 없는 상품입니다."));
+                .orElseThrow(() -> new BaseBizException("cartItemID가 " + cartItemId + "인 장바구니 아이템을 찾을 수 없습니다."));
 
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new NoSuchElementException("사용자의 장바구니를 찾을 수 없습니다."));
+                .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 장바구니를 찾을 수 없습니다."));
 
         //장바구니 검증
         if (!cartItem.getCart().equals(cart)) {
-            throw new IllegalArgumentException("해당 장바구니에 아이템이 없습니다.");
+            throw new BaseBizException("장바구니에 해당 상품이 없습니다.");
         }
 
         //수량이 1보다 크다면 1감소, 아니라면 삭제
@@ -104,7 +102,6 @@ public class CartService {
 
             cartItemRepository.delete(cartItem);
         }
-
         return getMyCart(userId);
     }
 
@@ -112,13 +109,12 @@ public class CartService {
     public ApiResponse<CartDto> clearCart(Long userId) {
 
         Cart cart = cartRepository.findByUserId(userId)
-              .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+                .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 장바구니를 찾을 수 없습니다."));
 
         cartItemRepository.deleteByCartId(cart.getId());
         cartRepository.delete(cart);
 
-
-        return getMyCart(userId);
+        return ApiResponse.ok(200, "주문 취소 성공", null);
     }
 
     //장바구니 조회
@@ -149,12 +145,12 @@ public class CartService {
         return ApiResponse.ok(200,"장바구니 조회 성공", cartDto);
     }
 
+    //장바구니 조회 및 삭제 (주문 서비스 요청)
     public List<CreateOrderReqDto> getCartItemsForOrder(Long userId) {
 
-        log.info("order-service 장바구니 조회/삭제 요청");
-
+        log.info("order-service 장바구니 조회/삭제 요청 시작");
         Cart cart = cartRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Cart not found for user: " + userId));
+                .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 장바구니를 찾을 수 없습니다."));
 
         List<CartItem> cartItems = cartItemRepository.findByCartIdWithProductGroup(cart.getId());
 
@@ -166,8 +162,8 @@ public class CartService {
                 ))
                 .collect(Collectors.toList());
 
-        clearCart(userId);
-
+        cartItemRepository.deleteByCartId(cart.getId());
+        cartRepository.delete(cart);
         log.info("order-service 장바구니 조회/삭제 완료");
 
         return orderReqDtos;

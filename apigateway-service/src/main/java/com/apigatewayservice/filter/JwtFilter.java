@@ -21,8 +21,13 @@ import java.security.Key;
 import java.util.Base64;
 import java.util.Map;
 
+
+/**
+ * jwt 검증 필터
+ */
+
 @Component
-@Slf4j
+@Slf4j(topic = "Gateway JWT 검증 Filter")
 public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
 
     private final Environment env;
@@ -52,6 +57,8 @@ public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
 
             ServerHttpRequest request = exchange.getRequest();
             ServerHttpResponse response = exchange.getResponse();
+
+            log.info("Custom filter Start");
 
             if (!request.getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
                 return chain.filter(exchange);
@@ -91,11 +98,8 @@ public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
                 return onError(response, "JWT validation failed: " + e.getMessage());
             }
 
-            log.info("Custom PRE filter: request uri -> {}", request.getURI());
-            log.info("Custom PRE filter: request id -> {}", request.getId());
-
             return chain.filter(exchange).then(Mono.fromRunnable(() -> {
-                log.info("Custom POST filter: response status code -> {}", response.getStatusCode());
+                log.info("Custom filter End: response code -> {}", response.getStatusCode());
             }));
         };
     }

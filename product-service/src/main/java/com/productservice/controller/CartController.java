@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -56,8 +57,8 @@ public class CartController {
     }
 
     //order-service 에서 회원 장바구니 조회
-    @GetMapping("/{userId}/orders")
-    public ResponseEntity<List<CreateOrderReqDto>> getCartItems(@PathVariable("userId") Long userId){
+    @GetMapping("/orders")
+    public ResponseEntity<List<CreateOrderReqDto>> getCartItems(@RequestHeader("X-Claim-userId") Long userId){
         return ResponseEntity.ok(cartService.getCartItemsForOrder(userId));
     }
 

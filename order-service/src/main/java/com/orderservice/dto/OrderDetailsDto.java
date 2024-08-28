@@ -12,9 +12,9 @@ import java.util.List;
  */
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class OrderDetailsDto {
 
     private OrderResDto oder_info;

@@ -16,7 +16,9 @@ import java.util.Optional;
 @Repository
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
-    //productGroup fetch join 이 안됨
+    Optional<CartItem> findByCartAndProductOption(Cart cart, ProductOption productOption);
+
+    //productGroup fetch join 이 안됨 //이유를 모르겠음
     @EntityGraph(attributePaths = { "productOption.product.productGroup"})
     List<CartItem> findByCartId(Long cartId);
 
@@ -31,8 +33,5 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Modifying
     @Query("DELETE FROM CartItem ci WHERE ci.cart.id = :cartId")
     void deleteByCartId(@Param("cartId") Long cartId);
-
-
-    Optional<CartItem> findByCartAndProductOption(Cart cart, ProductOption productOption);
 
 }

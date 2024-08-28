@@ -1,6 +1,7 @@
 package com.productservice.service;
 
-import com.common.dto.ApiResponse;
+import com.common.exception.BaseBizException;
+import com.common.response.ApiResponse;
 import com.common.dto.order.DecreaseStockReqDto;
 import com.common.dto.order.IncreaseStockReqDto;
 import com.common.dto.product.ProductInfoDto;
@@ -60,7 +61,7 @@ public class ProductService {
 
         //상품 조회
         Product product = productRepository.findProductsById(productId)
-                .orElseThrow(() -> new NoSuchElementException("등록된 상품이 없습니다."));
+                .orElseThrow(() -> new BaseBizException("productID가 " + productId + "인 상품을 찾을 수 없습니다."));
 
         //상품 옵션 조회
         List<ProductOption> getOptions = productOptionRepository.findByProductId(productId);
@@ -76,24 +77,22 @@ public class ProductService {
                 .option(optionNameAndStock)
                 .build();
 
-        return ApiResponse.ok(200,"제품 상세 조회 성공", productDetailsDto);
+        return ApiResponse.ok(200, "제품 상세 조회 성공", productDetailsDto);
     }
 
     // 재고 감소
     @Transactional
     public void decreaseStock(List<DecreaseStockReqDto> decreaseStockReqDtos) {
 
-
         log.info("재고 감소 로직 시작");
         log.info("decreaseStockReqDto.get(0).getProductOptionId() = {}", decreaseStockReqDtos.get(0).getProductOptionId());
 
         for (DecreaseStockReqDto dto : decreaseStockReqDtos) {
             ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new BaseBizException("productOptionID가 " + dto.getProductOptionId() + "인 상품 옵션을 찾을 수 없습니다."));
 
             productOption.decreaseStock(dto.getQuantity()); // 변경 감지 -> 자동으로 업데이트
         }
-
 
         log.info("재고 감소 로직 완료");
     }
@@ -108,7 +107,7 @@ public class ProductService {
 
         for (IncreaseStockReqDto dto : increaseStockReqDtos) {
             ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
-                    .orElseThrow(() -> new IllegalArgumentException("상품 옵션을 찾을 수 없습니다."));
+                    .orElseThrow(() -> new BaseBizException("productOptionID가 " + dto.getProductOptionId() + "인 상품 옵션을 찾을 수 없습니다."));
 
             productOption.increaseStock(dto.getQuantity()); // 변경 감지 -> 자동으로 업데이트
         }
@@ -122,7 +121,7 @@ public class ProductService {
         List<ProductOption> productOptions = productOptionRepository.findWithProductAndGroupById(productOptionIds);
 
         if (productOptions.isEmpty()) {
-            throw new NoSuchElementException("상품 옵션을 찾을 수 없습니다.");
+            throw new BaseBizException("상품 옵션 정보를 찾을 수 없습니다.");
         }
 
         //ProductInfoDto
