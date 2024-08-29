@@ -56,10 +56,20 @@ public class CartController {
         return ResponseEntity.ok(cartService.getMyCart(userId));
     }
 
-    //order-service 에서 회원 장바구니 조회
-    @GetMapping("/orders")
+    /**
+     * 주문 서비스 요청 API
+     */
+
+    //장바구니 조회
+    @GetMapping("/get-items")
     public ResponseEntity<List<CreateOrderReqDto>> getCartItems(@RequestHeader("X-Claim-userId") Long userId){
         return ResponseEntity.ok(cartService.getCartItemsForOrder(userId));
+    }
+
+    //장바구니 삭제
+    @GetMapping("/clear/after-order")
+    public ResponseEntity<?> clearCartAfterOrder(@RequestHeader("X-Claim-userId") Long userId){
+        return ResponseEntity.ok(cartService.clearCart(userId));
     }
 
 }

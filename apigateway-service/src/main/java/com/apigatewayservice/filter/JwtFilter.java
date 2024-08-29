@@ -88,8 +88,6 @@ public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
                     log.info("{}: {}", claimKey, claimValue);
                 }
 
-                mutatedRequest.header(HttpHeaders.AUTHORIZATION, authHeader);
-
                 request = mutatedRequest.build();
                 exchange = exchange.mutate().request(request).build();
 

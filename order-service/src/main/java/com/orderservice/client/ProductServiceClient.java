@@ -13,8 +13,12 @@ import java.util.List;
 public interface ProductServiceClient {
 
     //장바구니 조회
-    @GetMapping("/cart/orders")
+    @GetMapping("/cart/get-items")
     List<CreateOrderReqDto> getOrderItems(@RequestHeader("X-Claim-userId") Long userId);
+
+    //장바구니 조회
+    @GetMapping("/cart/clear/after-order")
+    void deleteCartAfterOrder(@RequestHeader("X-Claim-userId") Long userId);
 
     // 재고 증가
     @PostMapping("/product/option-stock/increase")

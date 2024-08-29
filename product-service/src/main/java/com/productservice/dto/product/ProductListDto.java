@@ -9,11 +9,10 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-public class ProductGroupListDto {
+public class ProductListDto {
 
-    private Long pg_id;
-    private String pg_name;
-    private List<Long> p_id;
+    private Long p_id;
+    private String p_name;
     private int price;
 
 }

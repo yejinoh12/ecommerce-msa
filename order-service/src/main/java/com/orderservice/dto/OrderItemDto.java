@@ -14,14 +14,12 @@ import lombok.NoArgsConstructor;
 public class OrderItemDto {
 
     private String name;
-    private String opt;
     private int cnt;
     private int price;
 
     public static OrderItemDto from(ProductInfoDto productInfoDto, OrderItem orderItem) {
         return OrderItemDto.builder()
                 .name(productInfoDto.getName())
-                .opt(productInfoDto.getOpt())
                 .cnt(orderItem.getQuantity())
                 .price(orderItem.getUnitPrice() * orderItem.getQuantity())
                 .build();

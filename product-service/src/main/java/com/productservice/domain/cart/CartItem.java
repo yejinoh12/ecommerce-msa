@@ -1,6 +1,6 @@
 package com.productservice.domain.cart;
 
-import com.productservice.domain.product.ProductOption;
+import com.productservice.domain.product.Product;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,15 +21,15 @@ public class CartItem {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_option_id")
-    private ProductOption productOption;
+    private Product product;
 
     @Column(nullable = false)
     private int count;
 
     @Builder
-    public CartItem(Cart cart,ProductOption productOption, int count) {
+    public CartItem(Cart cart, Product product, int count) {
         this.cart = cart;
-        this.productOption = productOption;
+        this.product = product;
         this.count = count;
     }
 

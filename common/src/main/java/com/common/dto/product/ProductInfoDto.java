@@ -9,8 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ProductInfoDto {
 
-    private Long productOptionId;
-    private String name;    //상품 풀네임(그룹네임+태그)
-    private String opt;     //옵션
+    private Long productId;
+    private String name;
 
 }

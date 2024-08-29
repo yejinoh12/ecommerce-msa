@@ -20,4 +20,9 @@ public class ApiResponse<T> {
         return new ApiResponse<>(status, message, data);
     }
 
+    @Builder
+    public static <T> ApiResponse<T> error(int status, String message) {
+        return new ApiResponse<>(status, message, null);
+    }
+
 }

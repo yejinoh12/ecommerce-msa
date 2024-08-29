@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class CartAddDto {
 
-    private Long opt;
+    private Long p_id;
     private int cnt;
 
 }

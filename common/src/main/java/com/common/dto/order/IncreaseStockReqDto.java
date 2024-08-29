@@ -8,6 +8,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class IncreaseStockReqDto {
-    private Long productOptionId;
-    private int quantity;
+    private Long productId;
+    private int cnt;
 }

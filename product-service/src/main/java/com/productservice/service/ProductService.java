@@ -1,23 +1,26 @@
 package com.productservice.service;
 
-import com.common.exception.BaseBizException;
-import com.common.response.ApiResponse;
+
 import com.common.dto.order.DecreaseStockReqDto;
 import com.common.dto.order.IncreaseStockReqDto;
 import com.common.dto.product.ProductInfoDto;
+import com.common.exception.BaseBizException;
+import com.common.response.ApiResponse;
+import com.productservice.domain.product.EventProduct;
 import com.productservice.domain.product.Product;
-import com.productservice.domain.product.ProductGroup;
-import com.productservice.domain.product.ProductOption;
+import com.productservice.domain.product.RegularProduct;
 import com.productservice.dto.product.ProductDetailsDto;
-import com.productservice.dto.product.ProductGroupListDto;
-import com.productservice.repository.product.ProductGroupRepository;
-import com.productservice.repository.product.ProductOptionRepository;
+import com.productservice.dto.product.ProductListDto;
+import com.productservice.dto.product.ProductStock;
 import com.productservice.repository.product.ProductRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -27,32 +30,28 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final ProductGroupRepository productGroupRepository;
-    private final ProductOptionRepository productOptionRepository;
 
-    //상품 목록 조회
-    public ApiResponse<List<ProductGroupListDto>> getProductsList() {
 
-        //그룹 조회
-        List<ProductGroup> productGroups = productGroupRepository.findAll();
+    // 상품 목록 조회 (일반 상품 / 이벤트 상품)
+    public ApiResponse<List<ProductListDto>> getProductsList(String type) {
 
-        //상품 조회
-        List<ProductGroupListDto> productGroupListDtos = productGroups.stream()
+        List<Product> products = null;
 
-                .filter(productGroup -> !productGroup.getProducts().isEmpty()) // Product 가 있는 경우만 필터링
-                .map(productGroup -> {
+        if (type.equals("regular")) {
+            products = productRepository.findRegularProducts();
+        } else if (type.equals("event")) {
+            products = productRepository.findEventProducts();
+        }
 
-                    List<Product> products = productGroup.getProducts();
-                    return ProductGroupListDto.builder()
-                            .pg_id(productGroup.getId())
-                            .pg_name(productGroup.getGroupName())
-                            .p_id(products.stream().map(Product::getId).sorted().toList()) // id 정렬
-                            .price(productGroup.getPrice())
-                            .build();
-                })
+        List<ProductListDto> productListDtos = products.stream()
+                .map(product -> ProductListDto.builder()
+                        .p_id(product.getId())
+                        .p_name(product.getProductName())
+                        .price(product.getPrice())
+                        .build())
                 .collect(Collectors.toList());
 
-        return ApiResponse.ok(200, "제품 목록 조회 성공", productGroupListDtos);
+        return ApiResponse.ok(200, "제품 목록 조회 성공", productListDtos);
     }
 
 
@@ -60,77 +59,102 @@ public class ProductService {
     public ApiResponse<ProductDetailsDto> getProductDetailsWithOption(Long productId) {
 
         //상품 조회
-        Product product = productRepository.findProductsById(productId)
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BaseBizException("productID가 " + productId + "인 상품을 찾을 수 없습니다."));
 
-        //상품 옵션 조회
-        List<ProductOption> getOptions = productOptionRepository.findByProductId(productId);
+        // 시작 시간과 종료 시간을 가져오기 위해서 product가 LimitedProduct 인스턴스인지 확인
+        LocalDateTime eventStartTime = null;
+        LocalDateTime eventEndTime = null;
 
-        //Map (옵션, 재고)
-        Map<String, Integer> optionNameAndStock = getOptions.stream()
-                .collect(Collectors.toMap(ProductOption::getOptionName, ProductOption::getStock));
+        if (product instanceof EventProduct eventProduct) {
+            eventStartTime = eventProduct.getEventStartTime();
+            eventEndTime = eventProduct.getEventEndTime();
+        }
 
         ProductDetailsDto productDetailsDto = ProductDetailsDto.builder()
                 .p_id(product.getId())
-                .p_name(product.getProductGroup().getGroupName() + " - " + product.getTag())
-                .price(product.getProductGroup().getPrice())
-                .option(optionNameAndStock)
+                .p_name(product.getProductName())
+                .price(product.getPrice())
+                .type(getDtype(product))
+                .eventStartTime(eventStartTime)
+                .eventEndTime(eventEndTime)
                 .build();
 
         return ApiResponse.ok(200, "제품 상세 조회 성공", productDetailsDto);
     }
 
-    // 재고 감소
-    @Transactional
-    public void decreaseStock(List<DecreaseStockReqDto> decreaseStockReqDtos) {
+    //재고 조회
+    public ApiResponse<ProductStock> getProductStock(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다."));
+        ProductStock productStock = new ProductStock(productId, product.getStock());
+        return ApiResponse.ok(200, "제품 재고 조회 성공", productStock);
+    }
+
+    //재고 감소
+    //@Transactional
+    public synchronized void decreaseStock(List<DecreaseStockReqDto> decreaseStockReqDtos) {
 
         log.info("재고 감소 로직 시작");
-        log.info("decreaseStockReqDto.get(0).getProductOptionId() = {}", decreaseStockReqDtos.get(0).getProductOptionId());
-
         for (DecreaseStockReqDto dto : decreaseStockReqDtos) {
-            ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
-                    .orElseThrow(() -> new BaseBizException("productOptionID가 " + dto.getProductOptionId() + "인 상품 옵션을 찾을 수 없습니다."));
+            Product product = productRepository.findByIdForUpdate(dto.getProductId())
+                    .orElseThrow(() -> new BaseBizException("productID가 " + dto.getProductId() + "인 상품 옵션을 찾을 수 없습니다."));
 
-            productOption.decreaseStock(dto.getQuantity()); // 변경 감지 -> 자동으로 업데이트
+            product.decreaseStock(dto.getCnt()); // 변경 감지 -> 자동으로 업데이트
+            productRepository.saveAndFlush(product);
         }
 
         log.info("재고 감소 로직 완료");
     }
 
+    public synchronized void decrease(DecreaseStockReqDto dto) {
+        Product product = productRepository.findByIdForUpdate(dto.getProductId()).orElseThrow();
+        product.decreaseStock(dto.getCnt()); // 변경 감지 -> 자동으로 업데이트
+        productRepository.save(product);
+    }
 
     // 재고 증가
     @Transactional
     public void increaseStock(List<IncreaseStockReqDto> increaseStockReqDtos) {
 
         log.info("재고 증가 로직 시작");
-        log.info("increaseStockReqDto.get(0).getProductOptionId() = {}", increaseStockReqDtos.get(0).getProductOptionId());
-
         for (IncreaseStockReqDto dto : increaseStockReqDtos) {
-            ProductOption productOption = productOptionRepository.findById(dto.getProductOptionId())
-                    .orElseThrow(() -> new BaseBizException("productOptionID가 " + dto.getProductOptionId() + "인 상품 옵션을 찾을 수 없습니다."));
 
-            productOption.increaseStock(dto.getQuantity()); // 변경 감지 -> 자동으로 업데이트
+            Product product = productRepository.findById(dto.getProductId())
+                    .orElseThrow(() -> new BaseBizException("productID가 " + dto.getProductId() + "인 상품 옵션을 찾을 수 없습니다."));
+
+            product.increaseStock(dto.getCnt()); // 변경 감지 -> 자동으로 업데이트
         }
 
         log.info("재고 증가 로직 완료");
     }
 
     //상품 정보
-    public List<ProductInfoDto> getProductInfos(List<Long> productOptionIds) {
+    public List<ProductInfoDto> getProductInfos(List<Long> productIds) {
 
-        List<ProductOption> productOptions = productOptionRepository.findWithProductAndGroupById(productOptionIds);
+        List<Product> products = productRepository.findAllById(productIds);
 
-        if (productOptions.isEmpty()) {
+        if (products.isEmpty()) {
             throw new BaseBizException("상품 옵션 정보를 찾을 수 없습니다.");
         }
 
         //ProductInfoDto
-        return productOptions.stream()
+        return products.stream()
                 .map(productOption -> new ProductInfoDto(
                         productOption.getId(),
-                        productOption.getProduct().getProductGroup().getGroupName() + "-" + productOption.getProduct().getTag(),
-                        productOption.getOptionName()
+                        productOption.getProductName()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    //dType 조회
+    private String getDtype(Product product) {
+        if (product instanceof RegularProduct) {
+            return "REGULAR";
+        } else if (product instanceof EventProduct) {
+            return "EVENT";
+        } else {
+            throw new BaseBizException("상품 정보를 찾을 수 없습니다.");
+        }
     }
 }
