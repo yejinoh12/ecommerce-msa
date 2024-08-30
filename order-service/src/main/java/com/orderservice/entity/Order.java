@@ -40,9 +40,9 @@ public class Order extends BaseEntity {
         return new Order(userId, totalPrice, OrderStatus.ORDERED, DeliveryStatus.PENDING);
     }
 
-    /**
+    /**********************************************************
      * 상태 변경 메서드
-     */
+     **********************************************************/
 
     public void updateStatusToCanceled() {
         this.orderStatus = OrderStatus.CANCELED;

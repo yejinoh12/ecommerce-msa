@@ -4,13 +4,11 @@ import lombok.*;
 
 import java.util.Map;
 
-@Getter
-@Setter
+@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class CartItemDto {
-
     private Long c_item_id;
     private Long p_id;
     private String p_name;

@@ -6,9 +6,9 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
+/**********************************************************
  * 싱글 테이블 전략을 사용해서 일반 상품과 이벤트 상품을 구분
- */
+ **********************************************************/
 
 @Entity
 @Getter
@@ -28,15 +28,14 @@ public class Product {
     @Column(nullable = false)
     private int price;
 
+    @Setter
     @Column(nullable = false)
     private int stock;
 
-    //주문 가능 여부
     public boolean canPurchase(int quantity) {
         return stock >= quantity;
     }
 
-    //재고 감소 메서드 (주문 시)
     public void decreaseStock(int quantity) {
         if (this.stock < quantity) {
             throw new BaseBizException("재고가 부족으로 주문에 실패했습니다.");
@@ -44,7 +43,6 @@ public class Product {
         this.stock -= quantity;
     }
 
-    // 재고 증가 메서드 (주문 취소/반품 시)
     public void increaseStock(int quantity) {
         this.stock += quantity;
     }
@@ -61,4 +59,5 @@ public class Product {
         this.price = price;
         this.stock = stock;
     }
+
 }

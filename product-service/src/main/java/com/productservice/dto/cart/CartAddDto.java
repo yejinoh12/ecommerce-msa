@@ -1,12 +1,12 @@
 package com.productservice.dto.cart;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
-@Getter
-@Setter
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class CartAddDto {
-
     private Long p_id;
     private int cnt;
 

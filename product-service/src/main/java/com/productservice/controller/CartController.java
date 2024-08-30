@@ -3,14 +3,13 @@ package com.productservice.controller;
 import com.common.dto.order.CreateOrderReqDto;
 import com.common.utils.ParseRequestUtil;
 import com.productservice.dto.cart.CartAddDto;
-import com.productservice.service.CartService;
+import com.productservice.service.cart.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -56,9 +55,9 @@ public class CartController {
         return ResponseEntity.ok(cartService.getMyCart(userId));
     }
 
-    /**
+    /**********************************************************
      * 주문 서비스 요청 API
-     */
+     **********************************************************/
 
     //장바구니 조회
     @GetMapping("/get-items")

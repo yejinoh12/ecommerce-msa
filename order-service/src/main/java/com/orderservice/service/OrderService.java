@@ -1,9 +1,9 @@
 package com.orderservice.service;
 
+import com.common.dto.order.UpdateStockReqDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
 import com.common.dto.order.CreateOrderReqDto;
-import com.common.dto.order.DecreaseStockReqDto;
 import com.common.dto.product.ProductInfoDto;
 import com.common.dto.user.UserInfoDto;
 import com.orderservice.client.ProductServiceClient;
@@ -38,63 +38,55 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
-    /**
-     * 주문
-     */
+    //주문
     @Transactional
     public ApiResponse<OrderResDto> createOrder(Long userId) {
 
         log.info("주문 처리 시작: 사용자 ID = {}", userId);
 
-        Map<Order, List<CreateOrderReqDto>> orderReqDtos = createAndSaveOrder(userId); //주문 생성
+        List<CreateOrderReqDto> dtos = productServiceClient.getOrderItems(userId);
+        int totalPrice = calculateTotalPrice(dtos);
+        Order order = createAndSaveOrder(userId, totalPrice);
 
-        Order order = orderReqDtos.keySet().stream().findFirst()
-                .orElseThrow(() -> new BaseBizException("주문이 생성되지 않았습니다.")); //map's key
+        try {
 
-        // 결제 실패 시뮬레이션
-        ApiResponse<?> paymentResponse = paymentService.simulatePaymentProcessing(order.getId());
+            decreaseStockInRedis(dtos);                        //레디스 재고 감소
 
-        if (paymentResponse.getStatus() != 200) {
-            log.error("결제 요청 실패: 주문 ID = {}, 사용자 ID = {}", order.getId(), userId);
-            throw new BaseBizException(paymentResponse.getMessage());
+            ApiResponse<?> paymentResponse = paymentService.simulatePaymentProcessing(order.getId()); //고객 이탈 시뮬레이션
+            if (paymentResponse.getStatus() != 200) {
+                throw new BaseBizException("결제 실패: " + paymentResponse.getMessage());
+            }
+
+            createOrderItems(order, dtos);                     //주문 아이템 생성
+            synchronizeStockWithDatabase(dtos);                //재고 동기화
+            productServiceClient.deleteCartAfterOrder(userId); //장바구니 삭제 요청
+
+        } catch (BaseBizException e) {
+            rollbackStockInRedis(dtos);                       //실패 시 재고 롤백
+            log.error("결제 또는 재고 처리 실패: {}", e.getMessage());
         }
 
-        List<CreateOrderReqDto> dtos = orderReqDtos.get(order);      //map's value(주문 요청 상품 list)
-        createOrderItemAndUpdateStock(order, dtos, userId);          //주문 아이템 생성 및 재고 감소
-        OrderResDto orderResDto = OrderResDto.from(order, userId);   //Dto 생성
-
         log.info("주문 완료: 주문 ID = {}, 사용자 ID = {}", order.getId(), userId);
-
-        return new ApiResponse<>(201, "주문이 완료되었습니다.", orderResDto);
+        return new ApiResponse<>(201, "주문이 완료되었습니다.", OrderResDto.from(order, userId));
     }
 
-    /**
-     * 주문 객체 생성
-     * @return List<CreateOrderReqDto> : 제품서비스에서 사용자 장바구니에 있는 아이템을 가져와서 반환
-     */
-    private Map<Order, List<CreateOrderReqDto>> createAndSaveOrder(Long userId) {
-
-        List<CreateOrderReqDto> orderReqDtos = productServiceClient.getOrderItems(userId); //장바구니 조회
-
-        int totalPrice = orderReqDtos.stream()
-                .mapToInt(CreateOrderReqDto::getSubtotal)
-                .sum();
-
+    //주문 생성
+    private Order createAndSaveOrder(Long userId, int totalPrice) {
         Order order = Order.createOrder(userId, totalPrice);
         orderRepository.save(order);
-
         log.info("주문 생성 성공 orderId = {}, totalPrice={}", order.getId(), order.getTotalPrice());
-
-        return Map.of(order, orderReqDtos);
+        return order;
     }
 
+    //총 가격 계산
+    private int calculateTotalPrice(List<CreateOrderReqDto> orderReqDtos) {
+        return orderReqDtos.stream()
+                .mapToInt(CreateOrderReqDto::getSubtotal)
+                .sum();
+    }
 
-    /**
-     * 주문 아이템 객체 생성 및 재고 감소
-     */
-    void createOrderItemAndUpdateStock(Order order, List<CreateOrderReqDto> orderReqDtos, Long userId) {
-
-        List<DecreaseStockReqDto> decreaseStockReqDtos = new ArrayList<>();
+    //주문 아이템 생성
+    private void createOrderItems(Order order, List<CreateOrderReqDto> orderReqDtos) {
 
         for (CreateOrderReqDto reqDto : orderReqDtos) {
             OrderItem orderItem = OrderItem.createOrderItem(
@@ -103,34 +95,23 @@ public class OrderService {
                     reqDto.getSubtotal() / reqDto.getCnt(),
                     reqDto.getCnt()
             );
-
-            orderItemRepository.save(orderItem);
-            decreaseStockReqDtos.add(new DecreaseStockReqDto(reqDto.getP_id(), reqDto.getCnt()));
+            orderItemRepository.save(orderItem); // 데이터베이스에 주문 아이템 저장
         }
-        productServiceClient.decreaseStock(decreaseStockReqDtos); //재고 감소
-        productServiceClient.deleteCartAfterOrder(userId);        //장바구니 삭제
     }
 
-    /**
-     * 주문 목록 조회
-     */
+    //주문 목록 조회
     public ApiResponse<List<OrderResDto>> viewOrderList(Long userId) {
 
         List<Order> orders = orderRepository.findByUserId(userId);
 
-        List<OrderResDto> orderResDtos = new ArrayList<>();
-
-        for (Order order : orders) {
-            OrderResDto orderResDto = OrderResDto.from(order, userId);
-            orderResDtos.add(orderResDto);
-        }
+        List<OrderResDto> orderResDtos = orders.stream()
+                .map(order -> OrderResDto.from(order, userId))
+                .collect(Collectors.toList());
 
         return ApiResponse.ok(200, "주문 목록 조회 성공", orderResDtos);
     }
 
-    /**
-     * 주문 상세 내역 조회
-     */
+    //주문 상세 내역
     public ApiResponse<OrderDetailsDto> viewOrderDetails(Long orderId, Long userId) {
 
         Order order = orderRepository.findById(orderId)
@@ -152,9 +133,7 @@ public class OrderService {
         return ApiResponse.ok(200, "주문 상세 조회 성공", orderDetailsDto);
     }
 
-    /**
-     * 상품 아이템 조회
-     */
+    //상품 아이템 조회
     private List<OrderItemDto> getOrderItemDtos(List<OrderItem> orderItems) {
 
         List<Long> productIds = orderItems.stream() //orderItems 에서 productOptionId 가져오기
@@ -175,7 +154,34 @@ public class OrderService {
                     }
                     return OrderItemDto.from(productInfoDto, orderItem); //dto 반환
                 })
-
                 .collect(Collectors.toList());
+    }
+
+    /**********************************************************
+     * 상품 재고 변경 관련 API 호출 메서드
+     **********************************************************/
+
+    //레디스 상품 재고 감소 요청
+    private void decreaseStockInRedis(List<CreateOrderReqDto> dtos) {
+        List<UpdateStockReqDto> decreaseStockReqDtos = dtos.stream()
+                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "DEC"))
+                .collect(Collectors.toList());
+        productServiceClient.updateStock(decreaseStockReqDtos);
+    }
+
+    //레디스 상품 재고 롤백 요청(주문 실패 시 재고 증가)
+    private void rollbackStockInRedis(List<CreateOrderReqDto> dtos) {
+        List<UpdateStockReqDto> rollbackStockReqDtos = dtos.stream()
+                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "INC"))
+                .collect(Collectors.toList());
+        productServiceClient.updateStock(rollbackStockReqDtos);
+    }
+
+    //데이터베이스와의 재고 동기화
+    private void synchronizeStockWithDatabase(List<CreateOrderReqDto> dtos) {
+        List<UpdateStockReqDto> synchronizeStockReqDtos = dtos.stream()
+                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "SYNC"))
+                .collect(Collectors.toList());
+        productServiceClient.updateStock(synchronizeStockReqDtos);
     }
 }

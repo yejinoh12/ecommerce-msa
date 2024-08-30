@@ -21,7 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE TYPE(p) = EventProduct")
     List<Product> findEventProducts();
 
-    //@Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Product p WHERE p.id = :id")
-    Optional<Product> findByIdForUpdate(Long id);
+    Optional<Product> findByIdWithPessimisticLock(Long id);
 }

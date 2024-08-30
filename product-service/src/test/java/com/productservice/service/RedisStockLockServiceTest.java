@@ -1,14 +1,16 @@
 package com.productservice.service;
 
-import com.common.dto.order.DecreaseStockReqDto;
+import com.common.dto.order.UpdateStockReqDto;
 import com.productservice.domain.product.Product;
 import com.productservice.repository.product.ProductRepository;
+import com.productservice.service.stock.RedisStockLockService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -16,17 +18,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
-public class ProductServiceTest {
+class RedisStockLockServiceTest {
 
     @Autowired
     private ProductRepository productRepository;
 
     @Autowired
-    private ProductService productService;
+    private RedisStockLockService redisStockLockService;
 
     private Product product;
 
@@ -42,15 +43,15 @@ public class ProductServiceTest {
     }
 
     @Test
-    public void decrease_test() {
-        productService.decreaseStock(List.of(new DecreaseStockReqDto(product.getId(), 10)));
-         Product p1 = productRepository.findById(product.getId()).orElseThrow();
+    public void RedissonLockTestV1() {
+        redisStockLockService.updateStockRedisson(List.of(new UpdateStockReqDto(product.getId(), 100, "DEC")));
+        Product p1 = productRepository.findById(product.getId()).orElseThrow();
         assertEquals(0, p1.getStock());
     }
 
     @Test
-    @DisplayName("재고 동시성 테스트 - 재고가 10개 일때, 스레드 10개가 1개씩 주문하는 경우")
-    void testDecreaseStockConcurrency() throws InterruptedException {
+    @DisplayName("Redisson Test : 재고가 100개 일때, 고객 101명이 주문하는 경우")
+    void RedissonLockTest2() throws InterruptedException {
 
         int threadCount = 101;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
@@ -62,7 +63,7 @@ public class ProductServiceTest {
         for (int i = 0; i < threadCount; i++) {
             executorService.submit(() -> {
                 try {
-                    productService.decreaseStock(List.of(new DecreaseStockReqDto(product.getId(), 1)));
+                    redisStockLockService.updateStockRedisson(List.of(new UpdateStockReqDto(product.getId(), 1, "DEC")));
                     successCount.getAndIncrement();
                 } catch (Exception e) {
                     failCount.getAndIncrement();

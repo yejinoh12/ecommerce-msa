@@ -1,16 +1,14 @@
 package com.productservice.dto.cart;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.List;
 
-@Getter
-@Setter
+@Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class CartDto {
-
     private Long c_id;
     private List<CartItemDto> items;
 
