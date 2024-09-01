@@ -1,6 +1,7 @@
 package com.userservice.util;
 
 import com.userservice.entity.UserRoleEnum;
+import com.userservice.exeption.AuthenticationException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -9,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -25,18 +27,16 @@ import java.util.Map;
 @Component
 public class JwtUtil {
 
-    public static final String AUTHORIZATION_HEADER = "Authorization";     // Header KEY 값
+    public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String REFRESH_TOKEN_HEADER = "RefreshToken";
+    public static final String BEARER_PREFIX = "Bearer ";
 
-    public static final String AUTHORIZATION_KEY = "auth";                 // 사용자 권한 값의 KEY
-    public static final String BEARER_PREFIX = "Bearer ";                  // Token 식별자
-
-    private final long jwtExpiration = 24 * 60 * 60 * 1000L;          // 1일 (24시간)
+    //만료 시간
+    private final long jwtExpiration = 24 * 60 * 60 * 1000L;               // 1일 (24시간)
     private final long refreshTokenExpiration = 14 * 24 * 60 * 60 * 1000L; // 2주 (14일)
 
-    @Value("${jwt.secret.key}")                                           // Base64 Encode 한 SecretKey
+    @Value("${jwt.secret.key}")
     private String secretKey;
-
     private Key key;
     private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
@@ -46,9 +46,10 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-    /**
-     * access token
-     */
+
+    /**********************************************************
+     * 액세스 토큰
+     **********************************************************/
 
     public String createAccessToken(String userId, UserRoleEnum role) {
 
@@ -68,46 +69,11 @@ public class JwtUtil {
                         .compact();
     }
 
-    // JWT 토큰 substring
-    public String substringToken(String tokenValue) {
-        if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
-            return tokenValue.substring(7);
-        }
-        log.info("Not Found Token");
-        throw new NullPointerException("유효한 토큰이 없습니다. 다시 로그인 해주세요.");
-    }
+    /**********************************************************
+     * 리프레시 토큰 메서드
+     **********************************************************/
 
-    // 토큰 검증
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
-        } catch (SecurityException | MalformedJwtException | SignatureException e) {
-            log.info("Invalid JWT signature, 유효하지 않는 JWT 서명 입니다.");
-        } catch (ExpiredJwtException e) {
-            log.info("Expired JWT token, 만료된 JWT token 입니다.");
-        } catch (UnsupportedJwtException e) {
-            log.info("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
-        } catch (IllegalArgumentException e) {
-            log.info("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
-        }
-
-        return false;
-    }
-
-    //user 정보 가져오기
-    public Claims getUserInfoFromToken(String token) {
-        try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
-        }catch(ExpiredJwtException e){
-            return e.getClaims();
-        }
-    }
-
-    /**
-     * refresh token
-     */
-
+    //리프레시 토큰 발급
     public String createRefreshToken(String userId) {
 
         Date date = new Date();
@@ -121,8 +87,11 @@ public class JwtUtil {
                         .compact();
     }
 
+    //쿠키에 리프레시 토큰 추가
     public void addRefreshTokenToCookie(String token, HttpServletResponse res) {
+
         try {
+
             token = URLEncoder.encode(token, "utf-8").replaceAll("\\+", "%20"); // Cookie Value 에는 공백이 불가능해서 encoding 진행
 
             Cookie refreshCookie = new Cookie(REFRESH_TOKEN_HEADER, token); // Name-Value
@@ -139,25 +108,25 @@ public class JwtUtil {
         }
     }
 
-    //검증 실패할 경우 Cookie에 있는 Token을 삭제
-    public void clearRefreshTokenFromCookie(HttpServletResponse response){
+    //쿠키에 있는 리프레시 토큰 삭제(검증 실패 시)
+    public void clearRefreshTokenFromCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_HEADER, null);
         cookie.setPath("/");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }
 
-    // HttpServletRequest 에서 Cookie Value : refresh Token 가져오기
+    //쿠키에서 리프레시 토큰 추출
     public String getRefreshTokenFromRequest(HttpServletRequest req) {
 
         Cookie[] cookies = req.getCookies();
 
-        if(cookies != null){
-            for(Cookie cookie : cookies){
-                if(cookie.getName().equals(REFRESH_TOKEN_HEADER)){
-                    try{
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals(REFRESH_TOKEN_HEADER)) {
+                    try {
                         return URLDecoder.decode(cookie.getValue(), "UTF-8"); //다시 decode
-                    }catch (UnsupportedEncodingException e){
+                    } catch (UnsupportedEncodingException e) {
                         return null;
                     }
                 }
@@ -165,5 +134,44 @@ public class JwtUtil {
         }
 
         return null;
+    }
+
+    /**********************************************************
+     * 검증 및 기타 기능들
+     **********************************************************/
+
+    // 토큰 검증
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
+            return true;
+        } catch (SecurityException | MalformedJwtException | SignatureException e) {
+            log.info("유효하지 않는 JWT 서명 입니다.");
+        } catch (ExpiredJwtException e) {
+            log.info("만료된 JWT token 입니다.");
+        } catch (UnsupportedJwtException e) {
+            log.info("지원되지 않는 JWT 토큰 입니다.");
+        } catch (IllegalArgumentException e) {
+            log.info("잘못된 JWT 토큰 입니다.");
+        }
+        return false;
+    }
+
+    // JWT 토큰 substring
+    public String substringToken(String tokenValue) {
+        if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
+            return tokenValue.substring(7);
+        }
+        log.error("토큰을 찾을 수 없습니다.");
+        throw new AuthenticationException("유효한 토큰이 없습니다. 다시 로그인 해주세요.", HttpStatus.BAD_REQUEST);
+    }
+
+    //토큰에서 user 정보 추출
+    public Claims getUserInfoFromToken(String token) {
+        try {
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        }
     }
 }

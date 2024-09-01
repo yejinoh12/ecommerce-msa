@@ -9,7 +9,7 @@ class AesUtilTest {
 
     @Test
     public void createKey(){
-         String salt = KeyGenerators.string().generateKey(); // generates a random 8-byte salt that is then hex-encoded
+         String salt = KeyGenerators.string().generateKey();
         System.out.println(salt);
     }
 

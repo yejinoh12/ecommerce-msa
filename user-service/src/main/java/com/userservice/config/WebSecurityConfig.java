@@ -1,10 +1,10 @@
 package com.userservice.config;
 
-import com.userservice.security.JwtAuthenticationFilter;
-import com.userservice.security.JwtAuthorizationFilter;
+import com.userservice.security.LoginFilter;
+import com.userservice.security.JwtValidationFilter;
 import com.userservice.security.UserDetailsServiceImpl;
+import com.userservice.service.token.TokenRedisService;
 import com.userservice.util.JwtUtil;
-import com.userservice.util.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,11 +13,8 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.logout.CookieClearingLogoutHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -25,7 +22,7 @@ import org.springframework.security.web.authentication.logout.CookieClearingLogo
 public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
-    private final RedisUtil redisUtil;
+    private final TokenRedisService tokenRedisService;
     private final UserDetailsServiceImpl userDetailsService;
     private final AuthenticationConfiguration authenticationConfiguration; //Authentication Manager 생성
 
@@ -35,15 +32,15 @@ public class WebSecurityConfig {
     }
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() throws Exception {
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(jwtUtil, redisUtil);
+    public LoginFilter jwtAuthenticationFilter() throws Exception {
+        LoginFilter filter = new LoginFilter(jwtUtil, tokenRedisService);
         filter.setAuthenticationManager(authenticationManager(authenticationConfiguration));
         return filter;
     }
 
     @Bean
-    public JwtAuthorizationFilter jwtAuthorizationFilter() {
-        return new JwtAuthorizationFilter(jwtUtil, redisUtil, userDetailsService);
+    public JwtValidationFilter jwtAuthorizationFilter() {
+        return new JwtValidationFilter(jwtUtil, tokenRedisService, userDetailsService);
     }
 
     @Bean
@@ -68,19 +65,13 @@ public class WebSecurityConfig {
                         .requestMatchers("/user/signup").permitAll() //요청 모두 접근 허가
                         .requestMatchers("/user/login").permitAll()
                         .requestMatchers("/user/**").permitAll()
+                        .requestMatchers("/email/**").permitAll()
                         .anyRequest().authenticated() // 그 외 모든 요청 인증처리
         );
 
         // 필터 관리
-        http.addFilterBefore(jwtAuthorizationFilter(), JwtAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthorizationFilter(), LoginFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
-
-        //로그아웃 (endpoint "/logout")
-        CookieClearingLogoutHandler cookies = new CookieClearingLogoutHandler("Authorization");
-        http.logout((logout) ->
-                logout
-                    .logoutUrl("/user/logout")
-                    .addLogoutHandler(cookies));
 
         return http.build();
     }

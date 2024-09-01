@@ -24,5 +24,4 @@ public class Cart {
         cart.userId = userId;
         return cart;
     }
-
 }

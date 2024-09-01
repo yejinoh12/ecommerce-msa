@@ -32,6 +32,7 @@ public class StockController {
         return ResponseEntity.ok().build();
     }
 
+    //미사용
     @PostMapping("/update-redis-stock")
     public ResponseEntity<Void> updateRedisStock(@RequestBody List<UpdateStockReqDto> decreaseStockReqDtos) {
         redisStockLockService.updateStockRedisson(decreaseStockReqDtos);

@@ -66,6 +66,9 @@ dependencies {
     implementation 'org.springframework.data:spring-data-redis:3.1.2'
     implementation 'io.lettuce:lettuce-core:6.2.5.RELEASE'
 
+    //이메일 인증
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
 }
 
 dependencyManagement {

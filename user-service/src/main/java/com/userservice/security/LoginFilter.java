@@ -2,9 +2,9 @@ package com.userservice.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.userservice.entity.UserRoleEnum;
-import com.userservice.dto.LoginRequestDto;
+import com.userservice.dto.LoginReqDto;
+import com.userservice.service.token.TokenRedisService;
 import com.userservice.util.JwtUtil;
-import com.userservice.util.RedisUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,15 +19,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.io.IOException;
 
-@Slf4j(topic = "로그인 및 JWT 생성")
-public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
+@Slf4j(topic = "로그인 필터")
+public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final JwtUtil jwtUtil;
-    private final RedisUtil redisUtil;
+    private final TokenRedisService tokenRedisService;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, RedisUtil redisUtil) {
+    public LoginFilter(JwtUtil jwtUtil, TokenRedisService tokenRedisService) {
         this.jwtUtil = jwtUtil;
-        this.redisUtil = redisUtil;
+        this.tokenRedisService = tokenRedisService;
         setFilterProcessesUrl("/user/login");
     }
 
@@ -38,7 +38,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         try {
 
-            LoginRequestDto requestDto = new ObjectMapper().readValue(req.getInputStream(), LoginRequestDto.class);
+            LoginReqDto requestDto = new ObjectMapper().readValue(req.getInputStream(), LoginReqDto.class);
 
             return getAuthenticationManager().authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -61,16 +61,18 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         String userId = ((UserDetailsImpl) authResult.getPrincipal()).getUserId();
         UserRoleEnum role = ((UserDetailsImpl) authResult.getPrincipal()).getUser().getRole();
-        log.info("토큰에 subject 에 담길 사용자 ID = {}", userId);
+        log.info("user ID = {}", userId);
 
+        //엑세스 토큰 & 리프레시 토큰 발급
         String accessToken = jwtUtil.createAccessToken(userId, role);
         String refreshToken = jwtUtil.createRefreshToken(userId);
 
-        redisUtil.saveRefreshToken(userId, refreshToken);
-
-        //accessToken, refreshToken 발급
+        tokenRedisService.setRefreshToken(userId, refreshToken);
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken);
         jwtUtil.addRefreshTokenToCookie(refreshToken, response);
+
+        log.info("액세스 토큰 & 리프레시 토큰 발급 완료");
+        successMessage(response, accessToken, refreshToken);
 
     }
 
@@ -81,6 +83,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         errorMessage(response, "로그인에 실패하셨습니다.");
     }
 
+    /**********************************************************
+     * 응답 메시지
+     **********************************************************/
+
     private void errorMessage(HttpServletResponse response, String message) throws IOException {
 
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
@@ -89,6 +95,18 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 "{"
                         + "\"success\": false,"
                         + "\"message\": \"" + message + "\""
+                        + "}"
+        );
+    }
+
+    private void successMessage(HttpServletResponse response, String access, String refresh) throws IOException {
+        response.setStatus(HttpStatus.OK.value());
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().println(
+                "{"
+                        + "\"success\": true,"
+                        + "\"accessToken\": \"" + access + "\","
+                        + "\"refreshToken\": \"" + refresh + "\""
                         + "}"
         );
     }
