@@ -15,6 +15,8 @@ import com.productservice.repository.product.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -78,7 +80,7 @@ public class ProductService {
     }
 
     /**********************************************************
-     * 헬퍼 메서드
+     * 보조 메서드
      **********************************************************/
 
     private List<Product> fetchProductsByType(String type) {
@@ -118,5 +120,13 @@ public class ProductService {
             return ((EventProduct) product).getEventEndTime();
         }
         return null;
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void decrease(Long productId, int quantity) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + productId));
+        product.decreaseStock(quantity);
+        productRepository.saveAndFlush(product);
     }
 }

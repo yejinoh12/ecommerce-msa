@@ -1,29 +1,23 @@
-package com.productservice.service.stock;
+package com.orderservice.service;
 
 import com.common.dto.order.UpdateStockReqDto;
-import com.productservice.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedisStockLockService {
+public class RedisLockFacade {
 
     private final RedissonClient redissonClient;
-    private final StockService stockService;
-//    private final RedisStockService redisStockService;
-//    private final ProductService productService;
+    private final RedisStockService redisStockService;
 
-    //재고 감소
     public void updateStockRedisson(List<UpdateStockReqDto> updateStockReqDtos) {
 
         for (UpdateStockReqDto dto : updateStockReqDtos) {
@@ -41,8 +35,6 @@ public class RedisStockLockService {
                 }
 
                 log.warn("Lock 획득 성공: productId={}", productId);
-                //stockService.decrease(productId, dto.getCnt());
-
                 handleStockUpdate(productId, dto.getCnt(), dto.getAction()); //변경이 일어나는 부분
 
             } catch (InterruptedException e) {
@@ -63,26 +55,17 @@ public class RedisStockLockService {
 
         switch (action) {
             case "INC":
-                stockService.increase(productId, quantity);
-                //redisStockService.cancel(productId, quantity);
-                //stockService.synchronizeStock(productId);
+                redisStockService.cancel(productId, quantity);
                 break;
 
             case "DEC":
-                stockService.decrease(productId, quantity);
-                //redisStockService.purchase(productId, quantity);
+                redisStockService.purchase(productId, quantity);
                 break;
-
-//            case "SYNC":
-//                stockService.synchronizeStock(productId);
-//                break;
 
             default:
                 throw new IllegalArgumentException("Invalid action: " + action);
         }
 
-//        Integer currentStock = redisStockService.loadDataIfAbsentInCache(productId);
-//        int dbStock = productService.findProductById(productId).getStock();
-//        log.info("재고 변경 로직 완료, redis 재고  = {}, db 재고 = {} ", currentStock, dbStock);
+        log.info("재고 변경 로직 완료");
     }
 }

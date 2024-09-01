@@ -1,61 +1,68 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.3.2'
-	id 'io.spring.dependency-management' version '1.1.6'
+    id 'java'
+    id 'org.springframework.boot' version '3.3.2'
+    id 'io.spring.dependency-management' version '1.1.6'
 }
 
 group = 'com'
 version = '0.0.1-SNAPSHOT'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 ext {
-	set('springCloudVersion', "2023.0.3")
+    set('springCloudVersion', "2023.0.3")
 }
 
 dependencies {
 
-	implementation project(':common')
+    implementation project(':common')
 
-	implementation 'org.springframework.boot:spring-boot-starter'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-	//feign client
-	implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    //feign client
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
 
-	//web
-	implementation 'org.springframework.boot:spring-boot-starter-web'
+    //web
+    implementation 'org.springframework.boot:spring-boot-starter-web'
 
-	//lombok
-	compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
+    //lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
 
-	//jpa
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    //jpa
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 
-	//mysql
-	runtimeOnly 'com.mysql:mysql-connector-j'
+    //mysql
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
-	//eureke client
-	implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    //eureke client
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+
+    //redis
+    implementation 'org.springframework.data:spring-data-redis:3.1.2'
+    implementation 'io.lettuce:lettuce-core:6.2.5.RELEASE'
+
+    //redisson
+    implementation group: 'org.redisson', name: 'redisson', version: '3.35.0'
 
 }
 
 dependencyManagement {
-	imports {
-		mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
-	}
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

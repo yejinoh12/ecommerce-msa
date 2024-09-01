@@ -1,6 +1,8 @@
 package com.productservice.controller;
 
+import com.common.dto.order.CreateOrderReqDto;
 import com.common.dto.order.UpdateStockReqDto;
+import com.common.dto.product.StockResponse;
 import com.productservice.service.stock.RedisStockLockService;
 import com.productservice.service.stock.StockService;
 import lombok.RequiredArgsConstructor;
@@ -20,18 +22,18 @@ public class StockController {
 
     //상품 재고 조회
     @GetMapping("/stock/{productId}")
-    public ResponseEntity<?> getProductStock( @PathVariable("productId") Long productId){
+    public ResponseEntity<StockResponse> getProductStock(@PathVariable("productId") Long productId){
         return ResponseEntity.status(HttpStatus.OK).body(stockService.getProductStock(productId));
+    }
+
+    @PostMapping("/stock/sync")
+    public ResponseEntity<Void> updateDbStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
+        redisStockLockService.updateStockRedisson(updateStockReqDtos);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/update-redis-stock")
     public ResponseEntity<Void> updateRedisStock(@RequestBody List<UpdateStockReqDto> decreaseStockReqDtos) {
-        redisStockLockService.updateStockRedisson(decreaseStockReqDtos);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/update-db-stock")
-    public ResponseEntity<Void> updateDbStock(@RequestBody List<UpdateStockReqDto> decreaseStockReqDtos) {
         redisStockLockService.updateStockRedisson(decreaseStockReqDtos);
         return ResponseEntity.ok().build();
     }

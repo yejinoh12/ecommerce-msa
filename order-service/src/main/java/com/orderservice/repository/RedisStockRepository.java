@@ -1,10 +1,9 @@
-package com.productservice.repository.product;
+package com.orderservice.repository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.util.Optional;

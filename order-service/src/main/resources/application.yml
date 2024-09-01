@@ -14,6 +14,10 @@ spring:
     url: jdbc:mysql://localhost:3346/orders?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: 1234
+  data:
+    redis:
+      host: localhost
+      port: 6381
 
 server:
   port: 8083

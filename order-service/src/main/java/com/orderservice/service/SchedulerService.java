@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -28,6 +29,7 @@ public class SchedulerService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductServiceClient productServiceClient;
+    private final RedisLockFacade redisLockFacade;
 
     @Scheduled(cron = "0/24 * * * * ?") // 매 24초마다 실행
     @Transactional
@@ -60,7 +62,19 @@ public class SchedulerService {
 
         if (!orderIds.isEmpty()) {
             List<UpdateStockReqDto> updateStockReqDtos = orderItemRepository.findOrderItemDtosByOrderIds(orderIds);
-            productServiceClient.updateStock(updateStockReqDtos); //상품 서비스에 재고 증가 요청
+
+
+            //재고 변경(redis, db)
+            redisLockFacade.updateStockRedisson(updateStockReqDtos);
+            CompletableFuture.runAsync(() -> productServiceClient.requestStockSync(updateStockReqDtos))
+                    .exceptionally(ex -> {
+                        log.error("Error occurred while syncing stock", ex);
+                        return null;
+                    });
+
+            //productServiceClient.updateStock(updateStockReqDtos); //상품 서비스에 재고 증가 요청
         }
+
+
     }
 }

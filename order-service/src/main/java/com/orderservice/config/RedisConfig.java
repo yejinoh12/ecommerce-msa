@@ -1,4 +1,5 @@
-package com.productservice.config;
+package com.orderservice.config;
+
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;

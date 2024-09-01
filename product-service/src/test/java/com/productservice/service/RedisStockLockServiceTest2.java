@@ -19,10 +19,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SpringBootTest
-class RedisStockLockServiceTest {
+class RedisStockLockServiceTest2 {
 
     @Autowired
     private ProductRepository productRepository;
@@ -37,28 +38,29 @@ class RedisStockLockServiceTest {
 
     @BeforeEach
     public void BeforeEach() {
-        product = new Product("product", 10,10);
+        product = new Product("product", 100,100);
         productRepository.save(product);
+        //redisStockService.enrollStock(product.getId(), 1000);
     }
 
     @AfterEach
     public void AfterEach(){
         productRepository.delete(product);
-        redisStockService.deleteStock(product.getId());
+        //redisStockService.deleteStock(product.getId());
     }
 
     @Test
     public void RedissonLockTestV1() {
         redisStockLockService.updateStockRedisson(List.of(new UpdateStockReqDto(product.getId(), 100, "DEC")));
         Product p1 = productRepository.findById(product.getId()).orElseThrow();
-        assertEquals(0, p1.getStock());
+        assertEquals(100, p1.getStock());
     }
 
     @Test
     @DisplayName("Redisson Test : 재고가 100개 일때, 고객 101명이 주문하는 경우")
     void RedissonLockTest2() throws InterruptedException {
 
-        int threadCount = 100;
+        int threadCount = 101;
         ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
         CountDownLatch latch = new CountDownLatch(threadCount);
 
@@ -69,9 +71,10 @@ class RedisStockLockServiceTest {
 
             executorService.submit(() -> {
                 try {
-                    redisStockLockService.updateStockRedisson(List.of(new UpdateStockReqDto(product.getId(), 1, "INC")));
+                    redisStockLockService.updateStockRedisson(List.of(new UpdateStockReqDto(product.getId(), 1, "DEC")));
                     successCount.getAndIncrement();
                 } catch (Exception e) {
+                    System.out.println(e.getMessage());
                     failCount.getAndIncrement();
                 } finally {
                     latch.countDown();
@@ -92,9 +95,9 @@ class RedisStockLockServiceTest {
 
         assertAll(
                 () -> assertThat(successCount.get()).isEqualTo(100),
-                () -> assertThat(failCount.get()).isEqualTo(0),
-                () -> assertThat(p1.getStock()).isEqualTo(110) // DB 재고 확인
-               // () -> assertThat(redisStock).isEqualTo(100) // Redis 재고 확인
+                () -> assertThat(failCount.get()).isEqualTo(1),
+                () -> assertThat(p1.getStock()).isEqualTo(0) // DB 재고 확인
+                //() -> assertThat(redisStock).isEqualTo(0) // Redis 재고 확인
         );
     }
 }

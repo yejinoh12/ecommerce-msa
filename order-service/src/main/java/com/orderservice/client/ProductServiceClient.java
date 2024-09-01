@@ -1,8 +1,10 @@
 package com.orderservice.client;
 
 import com.common.dto.order.CreateOrderReqDto;
+import com.common.dto.order.StockSyncReqDto;
 import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.product.ProductInfoDto;
+import com.common.dto.product.StockResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +30,10 @@ public interface ProductServiceClient {
     void updateStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos);
 
     //제품 재고 동기화
-    @PostMapping("/product/update-db-stock")
-    void synchronizeStock(@RequestBody List<UpdateStockReqDto> syncStockReqDtos);
+    @PostMapping("/product/stock/sync")
+    void requestStockSync(@RequestBody List<UpdateStockReqDto> updateStockReqDto);
 
+    //제품 재고 요청(주문 시 레디스에 정보가 없는 경우)
+    @GetMapping("/product/stock/{productId}")
+    StockResponse getProductStock(@PathVariable("productId") Long productId);
 }

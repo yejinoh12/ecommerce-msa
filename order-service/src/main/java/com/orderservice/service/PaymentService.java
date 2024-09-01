@@ -1,6 +1,8 @@
 package com.orderservice.service;
 
+import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
+import com.orderservice.exception.PaymentFailureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,23 +20,20 @@ public class PaymentService {
      * [결제 실패] 결제 이후 PG사 처리를 기다리는 중이었지만 고객 사유 또는 카드사 장애 등의 이유로 결제 실패(이탈률 20%)
      **********************************************************/
 
-    public ApiResponse<?> simulatePaymentProcessing(Long orderId) {
+    public void simulatePaymentProcessing(Long orderId) {
 
         //결제 까지 왔지만 결제를 취소
         boolean paymentCancelled = random.nextInt(100) < 20;
         if (paymentCancelled) {
             log.info("결제 취소: 주문 ID = {}", orderId);
-            return ApiResponse.error(400, "결제 취소됨");
+            throw new PaymentFailureException("결제가 취소 되었습니다. 주문 ID : " + orderId);
         }
 
         //결제 실패
         boolean paymentSuccessful = random.nextInt(100) >= 20; // 80% 확률로 결제 성공
-        if (paymentSuccessful) {
-            return ApiResponse.ok(200, "결제 성공", null);
-        } else {
+        if (!paymentSuccessful) {
             log.error("결제 실패: 주문 ID = {}", orderId);
-            return ApiResponse.error(500, "결제 실패. 나중에 다시 시도해 주세요.");
+            throw new PaymentFailureException("결제 중 오류가 발생했습니다. 주문 ID: "  + orderId);
         }
     }
-
 }

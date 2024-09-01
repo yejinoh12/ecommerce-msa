@@ -1,17 +1,22 @@
 package com.productservice.service.stock;
 
 
+import com.common.exception.BaseBizException;
 import com.productservice.domain.product.Product;
 import com.productservice.repository.product.ProductRepository;
 import com.productservice.repository.product.RedisStockRepository;
+import com.productservice.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.BindException;
 
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class RedisStockService {
@@ -24,20 +29,40 @@ public class RedisStockService {
         redisStockRepository.save(productId, quantity);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void purchase(Long productId, int quantity) {
+
         Integer currentStock = loadDataIfAbsentInCache(productId);
+        log.info("redis 재고 감소 시작, productId = {}, stock = {} ", productId, currentStock);
+
         if (currentStock < quantity) {
-            throw new RuntimeException("재고가 부족합니다.");
-        }else{
-            redisStockRepository.decrementStock(productId, quantity);
+            throw new BaseBizException("재고가 부족합니다.");
         }
+
+        redisStockRepository.decrementStock(productId, quantity);
+
+        log.info("redis 재고 감소 완료, productId = {}, stock = {}", productId, currentStock - quantity);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    /**
+     *  redis 트랜젝션 내의 get 은 null을 반환할 수 있다.
+     *  spring redis transaction 을 걸게 되면, multi-exec이 걸리게 되고 그 사이에 get을 한다면, exec구문이 끝난 뒤에 return이 되기 때문
+     **/
+    @Transactional
     public void cancel(Long productId, int quantity) {
-        loadDataIfAbsentInCache(productId);
+
+        Integer currentStock = loadDataIfAbsentInCache(productId);
+
+        log.info("redis 재고 증가 시작, productId = {}, stock = {} ", productId, currentStock);
         redisStockRepository.incrementStock(productId, quantity);
+        log.info("redis 재고 증가 완료, productId = {}, stock = {} ", productId, currentStock + quantity);
+//
+//        Product product = productRepository.findById(productId)
+//                .orElseThrow(() -> new BaseBizException("상품을 찾을 수 없습니다. ID: " + productId));
+//
+//        product.setStock(currentStock + quantity);
+//        productRepository.saveAndFlush(product);
+//        log.info("DB 재고 동기화: productId={}, Redis 재고={}, DB 재고 = {}", productId, currentStock, product.getStock());
     }
 
     @Transactional
@@ -45,11 +70,10 @@ public class RedisStockService {
         return redisStockRepository.findProductStock(productId);
     }
 
-    /**
-     * 캐시에서 재고 정보를 가져오거나 없을 시 DB에서 조회 후 캐시에 저장
-     * @param productId 상품 ID
-     * @return 현재 재고
-     */
+    @Transactional
+    public void deleteStock(Long productId) {
+        redisStockRepository.delete(productId); //junit test 후 삭제 시키기 위함
+    }
 
     public Integer loadDataIfAbsentInCache(Long productId) {
 

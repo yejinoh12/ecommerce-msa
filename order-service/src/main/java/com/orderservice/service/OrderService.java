@@ -1,5 +1,6 @@
 package com.orderservice.service;
 
+import com.common.dto.order.StockSyncReqDto;
 import com.common.dto.order.UpdateStockReqDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
@@ -13,14 +14,15 @@ import com.orderservice.dto.OrderItemDto;
 import com.orderservice.dto.OrderResDto;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
+import com.orderservice.exception.PaymentFailureException;
 import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
+import com.orderservice.repository.RedisStockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,6 +39,13 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
+    private final RedisLockFacade redisLockFacade;
+    private final RedisStockService redisStockService;
+    private final RedisStockRepository redisStockRepository;
+
+    /**********************************************************
+     * 비즈니스 로직
+     **********************************************************/
 
     //주문
     @Transactional
@@ -50,25 +59,30 @@ public class OrderService {
 
         try {
 
-            decreaseStockInRedis(dtos);                        //레디스 재고 감소
+            decreaseStockInRedis(dtos);                              //레디스 재고 감소
+            paymentService.simulatePaymentProcessing(order.getId()); //고객 이탈 시뮬레이션(실패시 PaymentFailureException 발생)
+            createOrderItems(order, dtos);                           //주문 아이템 생성
 
-            ApiResponse<?> paymentResponse = paymentService.simulatePaymentProcessing(order.getId()); //고객 이탈 시뮬레이션
-            if (paymentResponse.getStatus() != 200) {
-                throw new BaseBizException("결제 실패: " + paymentResponse.getMessage());
-            }
+            requestStockSync(dtos, "DEC");                    //DB 재고 감소 요청(비동기)
+            productServiceClient.deleteCartAfterOrder(userId);      //장바구니 삭제 요청
 
-            createOrderItems(order, dtos);                     //주문 아이템 생성
-            synchronizeStockWithDatabase(dtos);                //재고 동기화
-            productServiceClient.deleteCartAfterOrder(userId); //장바구니 삭제 요청
+        } catch (PaymentFailureException e) {
 
-        } catch (BaseBizException e) {
-            rollbackStockInRedis(dtos);                       //실패 시 재고 롤백
+            increaseStockInRedis(dtos);                             //실패 시 재고 롤백(DB 요청 전이기 때문에 DB 증가 요청을 보낼 필요 없음)
             log.error("결제 또는 재고 처리 실패: {}", e.getMessage());
+            throw new BaseBizException(e.getMessage());
+
+        }catch (Exception e){
+            log.error("주문에 실패했습니다. : {}", e.getMessage());
         }
 
         log.info("주문 완료: 주문 ID = {}, 사용자 ID = {}", order.getId(), userId);
         return new ApiResponse<>(201, "주문이 완료되었습니다.", OrderResDto.from(order, userId));
     }
+
+    /**********************************************************
+     * 보조 메서드
+     **********************************************************/
 
     //주문 생성
     private Order createAndSaveOrder(Long userId, int totalPrice) {
@@ -98,6 +112,26 @@ public class OrderService {
             orderItemRepository.save(orderItem); // 데이터베이스에 주문 아이템 저장
         }
     }
+
+    //레디스 상품 재고 감소
+    private void decreaseStockInRedis(List<CreateOrderReqDto> dtos) {
+        List<UpdateStockReqDto> decreaseStockReqDtos = dtos.stream()
+                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "DEC"))
+                .collect(Collectors.toList());
+        redisLockFacade.updateStockRedisson(decreaseStockReqDtos);
+    }
+
+    //레디스 상품 재고 증가 (주문 실패 시 재고 증가)
+    private void increaseStockInRedis(List<CreateOrderReqDto> dtos) {
+        List<UpdateStockReqDto> increaseStockReqDtos = dtos.stream()
+                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "INC"))
+                .collect(Collectors.toList());
+        redisLockFacade.updateStockRedisson(increaseStockReqDtos);
+    }
+
+    /**********************************************************
+     * 주문 관련 조회 메서드
+     **********************************************************/
 
     //주문 목록 조회
     public ApiResponse<List<OrderResDto>> viewOrderList(Long userId) {
@@ -158,30 +192,15 @@ public class OrderService {
     }
 
     /**********************************************************
-     * 상품 재고 변경 관련 API 호출 메서드
+     * 상품 재고 DB 변경 요청 API
      **********************************************************/
 
-    //레디스 상품 재고 감소 요청
-    private void decreaseStockInRedis(List<CreateOrderReqDto> dtos) {
-        List<UpdateStockReqDto> decreaseStockReqDtos = dtos.stream()
-                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "DEC"))
-                .collect(Collectors.toList());
-        productServiceClient.updateStock(decreaseStockReqDtos);
-    }
-
-    //레디스 상품 재고 롤백 요청(주문 실패 시 재고 증가)
-    private void rollbackStockInRedis(List<CreateOrderReqDto> dtos) {
-        List<UpdateStockReqDto> rollbackStockReqDtos = dtos.stream()
-                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "INC"))
-                .collect(Collectors.toList());
-        productServiceClient.updateStock(rollbackStockReqDtos);
-    }
-
     //데이터베이스와의 재고 동기화
-    private void synchronizeStockWithDatabase(List<CreateOrderReqDto> dtos) {
-        List<UpdateStockReqDto> synchronizeStockReqDtos = dtos.stream()
-                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "SYNC"))
+    public void requestStockSync(List<CreateOrderReqDto> dtos, String action) {
+        log.info("상품 DB 재고 감소 요청");
+        List<UpdateStockReqDto> updateStockReqDtos = dtos.stream()
+                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), action))
                 .collect(Collectors.toList());
-        productServiceClient.updateStock(synchronizeStockReqDtos);
+        productServiceClient.requestStockSync(updateStockReqDtos);
     }
 }

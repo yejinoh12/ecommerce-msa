@@ -1,5 +1,6 @@
 package com.orderservice.service;
 
+import com.common.dto.order.CreateOrderReqDto;
 import com.common.dto.order.UpdateStockReqDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
@@ -10,11 +11,15 @@ import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,6 +28,8 @@ import java.util.List;
 public class ReturnAndCancelService {
 
     private final ProductServiceClient productServiceClient;
+    private final RedisLockFacade redisLockFacade;
+    private final OrderService orderService;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
@@ -42,6 +49,7 @@ public class ReturnAndCancelService {
 
     //반품하기 : 배송완료 된 제품만 가능, 배송 완료 후 D+1 까지 반품 가능)
     public ApiResponse<String> returnOrder(Long orderId) {
+
         Order order = findOrderById(orderId);
         checkReturnAvail(order);
         order.updateStatusToReturning(); // 상태 변경
@@ -50,7 +58,7 @@ public class ReturnAndCancelService {
     }
 
     /**********************************************************
-     * 헬퍼 메서드
+     * 보조 메서드
      **********************************************************/
 
     private Order findOrderById(Long orderId) {
@@ -58,10 +66,18 @@ public class ReturnAndCancelService {
                 .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));
     }
 
-    //상품 서비스에 주문 복구 요청
+    //재고 복구(redis, db)
     private void restoreStock(Long orderId) {
         List<UpdateStockReqDto> updateStockReqDtos = orderItemRepository.findOrderItemDtosByOrderId(orderId);
-        productServiceClient.updateStock(updateStockReqDtos);
+
+        redisLockFacade.updateStockRedisson(updateStockReqDtos);
+
+        // DB 재고 변경은 비동기 호출(CompletableFuture 사용)
+        CompletableFuture.runAsync(() -> productServiceClient.requestStockSync(updateStockReqDtos))
+                .exceptionally(ex -> {
+                    log.error("Error occurred while syncing stock", ex);
+                    return null;
+                });
     }
 
     //반품이 가능 한지 확인
