@@ -30,11 +30,6 @@ public class WebSecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration; //Authentication Manager 생성
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
     }

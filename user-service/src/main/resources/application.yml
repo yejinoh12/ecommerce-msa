@@ -32,8 +32,8 @@ eureka:
 
 
 aes:
-  key: 7Iqk7YyM66W07YOA
-  iv: 0123456789abcdef
+  secret: 00112233445566778899aabbccddeeff=
+  salt: 2e5eeed8a9b5a369
 
 jwt:
   secret:

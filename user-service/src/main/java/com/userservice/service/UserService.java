@@ -24,23 +24,26 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AesUtil aesUtil;
 
     //회원가입
     public ApiResponse<String> signup(SignUpRequestDto signUpRequestDto) {
 
-        String email = AesUtil.encrypt(signUpRequestDto.getEmail());    //이메일 암호화
+        String email = aesUtil.encrypt(signUpRequestDto.getEmail());    //이메일 암호화
 
         if (userRepository.findByEmail(email).isPresent()) {
             throw new BaseBizException("사용중인 이메일입니다.");  //이메일 중복 검증
         }
 
         //이메일 인증 기능 (구현 예정)
+
+        //유저 객체 생성
         User user = User.builder()
-                .name(AesUtil.encrypt(signUpRequestDto.getName()))
+                .name(aesUtil.encrypt(signUpRequestDto.getName()))
                 .password(passwordEncoder.encode(signUpRequestDto.getPassword()))
-                .address(AesUtil.encrypt(signUpRequestDto.getAddress()))
-                .email(AesUtil.encrypt(signUpRequestDto.getEmail()))
-                .phoneNumber(AesUtil.encrypt(signUpRequestDto.getPhoneNumber()))
+                .address(aesUtil.encrypt(signUpRequestDto.getAddress()))
+                .email(aesUtil.encrypt(signUpRequestDto.getEmail()))
+                .phoneNumber(aesUtil.encrypt(signUpRequestDto.getPhoneNumber()))
                 .role(UserRoleEnum.USER)
                 .build();
 
@@ -58,10 +61,10 @@ public class UserService {
         log.info(user.getPhoneNumber());
 
         UserResponseDto userResponseDto = UserResponseDto.builder()
-                .name(AesUtil.decrypt(user.getName()))
-                .email(AesUtil.decrypt(user.getEmail()))
-                //.phoneNumber(AesUtil.decrypt(user.getPhoneNumber()))
-                .address(AesUtil.decrypt(user.getAddress()))
+                .name(aesUtil.decrypt(user.getName()))
+                .email(aesUtil.decrypt(user.getEmail()))
+                .phoneNumber(aesUtil.decrypt(user.getPhoneNumber()))
+                .address(aesUtil.decrypt(user.getAddress()))
                 .createdAt(user.getCreatedAt())
                 .modifiedAt(user.getModifiedAt())
                 .build();
@@ -78,10 +81,10 @@ public class UserService {
         log.info(user.getPhoneNumber());
 
         return builder()
-                .name(AesUtil.decrypt(user.getName()))
-                .email(AesUtil.decrypt(user.getEmail()))
-                //.phoneNumber("dd")
-                .address(AesUtil.decrypt(user.getAddress()))
+                .name(aesUtil.decrypt(user.getName()))
+                .email(aesUtil.decrypt(user.getEmail()))
+                .phoneNumber(aesUtil.decrypt(user.getPhoneNumber()))
+                .address(aesUtil.decrypt(user.getAddress()))
                 .build();
     }
 
