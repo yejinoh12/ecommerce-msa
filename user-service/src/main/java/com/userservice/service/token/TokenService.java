@@ -1,9 +1,9 @@
 package com.userservice.service.token;
 
+import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
 import com.userservice.dto.TokenResDto;
 import com.userservice.entity.UserRoleEnum;
-import com.userservice.exeption.AuthenticationException;
 import com.userservice.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,7 +35,7 @@ public class TokenService {
         //유효성 검증
         if (!StringUtils.hasText(refreshToken) || !jwtUtil.validateToken(refreshToken) || !refreshTokenFromRedis.equals(refreshToken)) {
             jwtUtil.clearRefreshTokenFromCookie(response);
-            throw new AuthenticationException("리프레시 토큰이 유효하지 않습니다.", HttpStatus.UNAUTHORIZED);
+            throw new BaseBizException("리프레시 토큰이 유효하지 않습니다.", HttpStatus.UNAUTHORIZED);
         }
 
         //엑세스 토큰 & 리프레시 토큰 발급

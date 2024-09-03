@@ -1,7 +1,7 @@
-package com.productservice.repository.cart;
+package com.productservice.repository;
 
 
-import com.productservice.domain.cart.Cart;
+import com.productservice.domain.Cart;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,8 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface CartRepository extends JpaRepository<Cart, Long> {
-
     Optional<Cart> findByUserId (Long userId);
-
-
 }

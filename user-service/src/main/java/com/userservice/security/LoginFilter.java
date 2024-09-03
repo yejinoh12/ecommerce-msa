@@ -83,9 +83,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         errorMessage(response, "로그인에 실패하셨습니다.");
     }
 
-    /**********************************************************
-     * 응답 메시지
-     **********************************************************/
+    //응답 메시지
 
     private void errorMessage(HttpServletResponse response, String message) throws IOException {
 

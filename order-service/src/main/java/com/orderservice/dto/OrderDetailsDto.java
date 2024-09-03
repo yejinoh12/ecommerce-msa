@@ -13,12 +13,8 @@ import java.util.List;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class OrderDetailsDto {
-
     private OrderResDto oder_info;
     private UserInfoDto user_info;
     private List<OrderItemDto> order_items; // 장바구니 아이템 목록
-
 }

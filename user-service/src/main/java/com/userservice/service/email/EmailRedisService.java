@@ -2,18 +2,16 @@ package com.userservice.service.email;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.HashOperations;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class EmailRedisService {
 
-    private final StringRedisTemplate emailRedisTemplate; // 데이터베이스 인덱스 1 사용
+    private final StringRedisTemplate emailRedisTemplate;
 
     //이메일 인증 코드 저장
     public void setEmailVerificationCode(String email, String code) {

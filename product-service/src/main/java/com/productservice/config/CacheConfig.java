@@ -20,11 +20,11 @@ import java.time.Duration;
 public class CacheConfig {
 
     @Bean
-    public RedisCacheManager cacheManager( RedisConnectionFactory redisConnectionFactory) {
+    public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
 
         RedisCacheConfiguration configuration = RedisCacheConfiguration
                 .defaultCacheConfig()
-                .disableCachingNullValues()                   // null을 캐싱하는지
+                .disableCachingNullValues()                   // null 캐싱 여부
                 .entryTtl(Duration.ofSeconds(120))            // 기본 캐시 유지 시간 (Time To Live)
                 .computePrefixWith(CacheKeyPrefix.simple())   // 캐시를 구분하는 접두사 설정
                 .serializeValuesWith(                         /// 캐시에 저장할 값을 어떻게 직렬화 / 역직렬화 할것인지

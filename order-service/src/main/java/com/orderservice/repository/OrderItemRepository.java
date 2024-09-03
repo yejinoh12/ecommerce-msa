@@ -15,13 +15,13 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
     List<OrderItem> findByOrderId(Long OrderId);
 
     //특정 주문에 대한 DTO 생성
-    @Query("SELECT new com.common.dto.order.UpdateStockReqDto(oi.productId, oi.quantity, 'INC') " +
+    @Query("SELECT new com.common.dto.order.UpdateStockReqDto(oi.productId, oi.quantity) " +
             "FROM OrderItem oi WHERE oi.order.id = :orderId")
     List<UpdateStockReqDto> findOrderItemDtosByOrderId(@Param("orderId") Long orderId);
 
 
     //여러 주문에 대한 DTO 생성
-    @Query("SELECT new com.common.dto.order.UpdateStockReqDto(oi.productId, oi.quantity, 'INC') " +
+    @Query("SELECT new com.common.dto.order.UpdateStockReqDto(oi.productId, oi.quantity) " +
             "FROM OrderItem oi WHERE oi.order.id IN :orderIds")
     List<UpdateStockReqDto> findOrderItemDtosByOrderIds(@Param("orderIds") List<Long> orderIds);
 

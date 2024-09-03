@@ -41,7 +41,6 @@ public class RedisConfig {
         return new StringRedisTemplate(refreshTokenConnectionFactory);
     }
 
-
     /**********************************************************
      * 이메일 인증 레디스 설정
      **********************************************************/

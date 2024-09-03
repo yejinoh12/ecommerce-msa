@@ -1,17 +1,14 @@
 package com.productservice.controller;
 
-import com.common.dto.order.CreateOrderReqDto;
 import com.common.utils.ParseRequestUtil;
 import com.productservice.dto.cart.CartAddDto;
-import com.productservice.service.cart.CartService;
+import com.productservice.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Controller
 @RequiredArgsConstructor
@@ -61,7 +58,7 @@ public class CartController {
 
     //장바구니 조회
     @GetMapping("/get-items")
-    public ResponseEntity<List<CreateOrderReqDto>> getCartItems(@RequestHeader("X-Claim-userId") Long userId){
+    public ResponseEntity<?> getCartItems(@RequestHeader("X-Claim-userId") Long userId){
         return ResponseEntity.ok(cartService.getCartItemsForOrder(userId));
     }
 

@@ -17,7 +17,6 @@ public class OrderItem {
     @JoinColumn(name = "order_id")
     private Order order;
 
-    //상품 옵션(상품 서비스에서 가져오기)
     @Column(nullable = false)
     private Long productId;
 
@@ -37,5 +36,4 @@ public class OrderItem {
     public static OrderItem createOrderItem(Order order, Long productId, int unitPrice, int quantity) {
         return new OrderItem(order, productId, unitPrice, quantity);
     }
-
 }

@@ -1,6 +1,7 @@
 package com.orderservice.controller;
 
 import com.common.utils.ParseRequestUtil;
+import com.orderservice.dto.OrderReqDto;
 import com.orderservice.service.OrderService;
 import com.orderservice.service.ReturnAndCancelService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +20,18 @@ public class OrderController {
     private final ParseRequestUtil parseRequestUtil;
     private final ReturnAndCancelService returnAndCancelService;
 
-    //장바구니에 있는 상품 주문
+    //주문 전 장바구니 조회
     @PostMapping
-    public ResponseEntity<?> order(HttpServletRequest request) {
+    public ResponseEntity<?> getCartItems(HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.createOrder(userId));
+        return ResponseEntity.ok(orderService.getCartItems(userId));
+    }
+
+    //주문
+    @PostMapping("/start")
+    public ResponseEntity<?> order(@RequestBody OrderReqDto orderReqDto, HttpServletRequest request) {
+        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
+        return ResponseEntity.ok(orderService.createOrder(orderReqDto, userId));
     }
 
     //주문 내역 보기

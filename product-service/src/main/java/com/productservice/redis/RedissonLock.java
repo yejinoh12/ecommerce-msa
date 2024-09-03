@@ -1,6 +1,7 @@
-package com.orderservice.service;
+package com.productservice.redis;
 
 import com.common.dto.order.UpdateStockReqDto;
+import com.productservice.service.StockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
@@ -13,21 +14,21 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RedisLockFacade {
+public class RedissonLock {
 
     private final RedissonClient redissonClient;
-    private final RedisStockService redisStockService;
+    private final StockService stockService;
 
-    public void updateStockRedisson(List<UpdateStockReqDto> updateStockReqDtos) {
+    //재고 감소
+    public void updateStockRedisson(List<UpdateStockReqDto> updateStockReqDtos, String action) {
 
         for (UpdateStockReqDto dto : updateStockReqDtos) {
 
             Long productId = dto.getProductId();
-            String key = productId.toString();
-            RLock lock = redissonClient.getLock(key);
+            String lockKey = "lock:product:" + productId.toString(); // 락 키
+            RLock lock = redissonClient.getLock(lockKey);
 
             try {
-
                 boolean available = lock.tryLock(40, 1, TimeUnit.SECONDS); //40s 동안 1s 간격으로 Lock 시도
                 if (!available) {
                     log.warn("Lock 획득 실패: productId={}", productId);
@@ -35,10 +36,9 @@ public class RedisLockFacade {
                 }
 
                 log.warn("Lock 획득 성공: productId={}", productId);
-                handleStockUpdate(productId, dto.getCnt(), dto.getAction()); //변경이 일어나는 부분
+                stockService.handleStockUpdate(productId, dto.getCnt(), action); //변경이 일어나는 부분
 
             } catch (InterruptedException e) {
-
                 log.error("Lock 획득 중 오류 발생: productId={}", dto.getProductId(), e);
                 Thread.currentThread().interrupt(); // 인터럽트 상태 복구
 
@@ -49,23 +49,5 @@ public class RedisLockFacade {
                 }
             }
         }
-    }
-
-    public void handleStockUpdate(Long productId, int quantity, String action) {
-
-        switch (action) {
-            case "INC":
-                redisStockService.cancel(productId, quantity);
-                break;
-
-            case "DEC":
-                redisStockService.purchase(productId, quantity);
-                break;
-
-            default:
-                throw new IllegalArgumentException("Invalid action: " + action);
-        }
-
-        log.info("재고 변경 로직 완료");
     }
 }

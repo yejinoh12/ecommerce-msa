@@ -5,7 +5,6 @@ import com.common.utils.ParseRequestUtil;
 import com.userservice.dto.SignUpReqDto;
 import com.userservice.service.token.TokenService;
 import com.userservice.service.user.UserService;
-import com.userservice.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -43,10 +42,7 @@ public class UserController {
         return ResponseEntity.ok(tokenService.refreshAccessToken(request, response));
     }
 
-    /**********************************************************
-     * 주문 서비스 요청 API
-     **********************************************************/
-
+    //주문 서비스 유저 정보 조회
     @GetMapping("/info-order")
     public ResponseEntity<UserInfoDto> getUserInfo(@RequestHeader("X-Claim-userId") Long userId){
         return ResponseEntity.ok(userService.getUserInfo(userId));

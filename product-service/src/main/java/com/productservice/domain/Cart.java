@@ -1,10 +1,7 @@
-package com.productservice.domain.cart;
+package com.productservice.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter

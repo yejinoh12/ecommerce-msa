@@ -2,15 +2,11 @@ package com.orderservice.dto;
 
 import com.common.dto.product.ProductInfoDto;
 import com.orderservice.entity.OrderItem;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
 public class OrderItemDto {
 
     private String name;
@@ -24,5 +20,4 @@ public class OrderItemDto {
                 .price(orderItem.getUnitPrice() * orderItem.getQuantity())
                 .build();
     }
-
 }

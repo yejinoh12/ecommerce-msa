@@ -13,8 +13,10 @@ import com.userservice.service.email.EmailService;
 import com.userservice.util.AesUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.common.dto.user.UserInfoDto.*;
 
@@ -27,9 +29,10 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AesUtil aesUtil;
     private final EmailRedisService emailRedisService;
-    private final EmailService emailService;
+
 
     //회원가입
+    @Transactional
     public ApiResponse<String> signup(SignUpReqDto signUpReqDto) {
 
         //이메일 암호화
@@ -37,7 +40,7 @@ public class UserService {
 
         //이메일 중복 검증
         if (userRepository.findByEmail(email).isPresent()) {
-            throw new BaseBizException("사용중인 이메일입니다.");
+            throw new BaseBizException("사용중인 이메일입니다.", HttpStatus.CONFLICT);
         }
 
         //이메일 인증 여부 확인
@@ -83,10 +86,7 @@ public class UserService {
     }
 
 
-    /**********************************************************
-     * 주문 서비스 요청 API
-     **********************************************************/
-
+    //주문 서비스 유저 정보 조회
     public UserInfoDto getUserInfo(Long userId) {
 
         User user = userRepository.findById(userId)

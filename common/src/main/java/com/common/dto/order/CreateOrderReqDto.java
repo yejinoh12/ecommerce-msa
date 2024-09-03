@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateOrderReqDto {
 
-    private Long p_id;
+    private Long productId;
     private int cnt;
     private int subtotal;
 

@@ -1,7 +1,11 @@
 package com.productservice.controller;
 
+import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.product.ProductInfoDto;
-import com.productservice.service.product.ProductService;
+import com.common.dto.product.StockResponse;
+import com.productservice.service.ProductService;
+import com.productservice.redis.RedissonLock;
+import com.productservice.service.StockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,24 +20,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProductController {
 
-    private final ProductService stockService;
+    private final ProductService productService;
+    private final StockService stockService;
+    private final RedissonLock redissonLock;
 
     //타입별 상품 조회
     @GetMapping
-    public ResponseEntity<?> getEventProducts(@RequestParam("type") String type) {
-        return ResponseEntity.status(HttpStatus.OK).body(stockService.getProductsList(type));
+    public ResponseEntity<?> getEventProducts() {
+        return ResponseEntity.status(HttpStatus.OK).body(productService.getProductsList());
     }
 
     //상품 상세 조회
     @GetMapping("/{productId}")
     public ResponseEntity<?> getProductDetailsWithOption( @PathVariable("productId") Long productId){
-        return ResponseEntity.status(HttpStatus.OK).body(stockService.getProductDetailsWithOption(productId));
+        return ResponseEntity.status(HttpStatus.OK).body(productService.getProductDetailsWithOption(productId));
     }
 
     //상품 정보
-    @GetMapping("/info/{productOptionId}")
-    public List<ProductInfoDto> getProductInfos(@PathVariable("productOptionId") List<Long> productOptionIds) {
-        return stockService.getProductInfos(productOptionIds);
+    @GetMapping("/info/{productId}")
+    public List<ProductInfoDto> getProductInfos(@PathVariable("productId") List<Long> productIds) {
+        return productService.getProductInfos(productIds);
     }
 
+    //상품 재고 조회
+    @GetMapping("/stock/{productId}")
+    public ResponseEntity<StockResponse> getProductStock(@PathVariable("productId") Long productId){
+        return ResponseEntity.status(HttpStatus.OK).body(stockService.getProductStock(productId));
+    }
+
+    //주문 서비스에서 재고 변경 요청
+    @PostMapping("/stock/update/{action}")
+    public ResponseEntity<Void> updateRedisStock(@RequestBody List<UpdateStockReqDto> decreaseStockReqDtos,
+                                                 @PathVariable("action") String action) {
+        redissonLock.updateStockRedisson(decreaseStockReqDtos, action);
+        return ResponseEntity.ok().build();
+    }
 }

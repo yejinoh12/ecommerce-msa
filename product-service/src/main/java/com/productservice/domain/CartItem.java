@@ -1,6 +1,5 @@
-package com.productservice.domain.cart;
+package com.productservice.domain;
 
-import com.productservice.domain.product.Product;
 import jakarta.persistence.*;
 import lombok.*;
 

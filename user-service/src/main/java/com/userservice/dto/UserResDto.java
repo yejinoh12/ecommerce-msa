@@ -8,12 +8,10 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 public class UserResDto {
-
     private String name;
     private String email;
     private String address;
     private String phoneNumber;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
-
 }

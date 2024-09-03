@@ -1,8 +1,8 @@
-package com.productservice.repository.cart;
+package com.productservice.repository;
 
-import com.productservice.domain.cart.Cart;
-import com.productservice.domain.cart.CartItem;
-import com.productservice.domain.product.Product;
+import com.productservice.domain.Cart;
+import com.productservice.domain.CartItem;
+import com.productservice.domain.Product;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;

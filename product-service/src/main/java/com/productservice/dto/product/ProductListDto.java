@@ -1,14 +1,10 @@
 package com.productservice.dto.product;
 
-import com.productservice.domain.product.Product;
+import com.productservice.domain.Product;
 import lombok.*;
-
-import java.util.List;
 
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class ProductListDto {
     private Long p_id;
     private String p_name;

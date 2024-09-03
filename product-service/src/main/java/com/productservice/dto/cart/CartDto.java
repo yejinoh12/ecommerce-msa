@@ -6,10 +6,8 @@ import java.util.List;
 
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class CartDto {
-    private Long c_id;
+    private Long cartId;
     private List<CartItemDto> items;
 
 }

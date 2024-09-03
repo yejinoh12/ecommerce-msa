@@ -1,20 +1,16 @@
-package com.productservice.domain.product;
+package com.productservice.domain;
 
 import com.common.exception.BaseBizException;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.transaction.annotation.Transactional;
+import java.time.LocalDateTime;
 
 /**********************************************************
- * 싱글 테이블 전략을 사용해서 일반 상품과 이벤트 상품을 구분
+ * 모든 상품을 처리하는 통합 엔티티
  **********************************************************/
-
 @Entity
 @Getter
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@DiscriminatorColumn(name = "dtype")
 public class Product {
 
     @Id
@@ -32,11 +28,36 @@ public class Product {
     @Column(nullable = false)
     private int stock;
 
+    @Column
+    private LocalDateTime eventStartTime; // 이벤트 시작 시간
+
+    @Column
+    private LocalDateTime eventEndTime;   // 이벤트 종료 시간
+
+    @Builder
+    public Product(String productName, int price, int stock, LocalDateTime eventStartTime, LocalDateTime eventEndTime) {
+        this.productName = productName;
+        this.price = price;
+        this.stock = stock;
+        this.eventStartTime = eventStartTime;
+        this.eventEndTime = eventEndTime;
+    }
+
     public boolean canPurchase(int quantity) {
+        if (eventStartTime != null && eventEndTime != null) {
+            LocalDateTime now = LocalDateTime.now();
+            if (now.isBefore(eventStartTime) || now.isAfter(eventEndTime)) {
+                return false;
+            }
+        }
         return stock >= quantity;
     }
 
     public void decreaseStock(int quantity) {
+
+        if (!canPurchase(quantity)) {
+            throw new BaseBizException("이벤트가 활성 상태가 아닙니다.");
+        }
         if (this.stock < quantity) {
             throw new BaseBizException("재고가 부족으로 주문에 실패했습니다.");
         }
@@ -46,18 +67,4 @@ public class Product {
     public void increaseStock(int quantity) {
         this.stock += quantity;
     }
-
-    public Product(Long id, String productName, int price, int stock) {
-        this.id = id;
-        this.productName = productName;
-        this.price = price;
-        this.stock = stock;
-    }
-
-    public Product(String productName, int price, int stock) {
-        this.productName = productName;
-        this.price = price;
-        this.stock = stock;
-    }
-
 }

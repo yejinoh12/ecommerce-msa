@@ -1,6 +1,6 @@
 package com.userservice.security;
 
-import com.userservice.exeption.AuthenticationException;
+import com.common.exception.BaseBizException;
 import com.userservice.service.token.TokenRedisService;
 import com.userservice.util.JwtUtil;
 import io.jsonwebtoken.Claims;
@@ -42,7 +42,7 @@ public class JwtValidationFilter extends OncePerRequestFilter {
 
                 if (!jwtUtil.validateToken(tokenValue)) {                    // 액세스 토큰 유효성 검사
                     log.error("액세스 토큰 검증 실패");
-                    throw new AuthenticationException("액새스 토큰이 만료 되었습니다.");
+                    throw new BaseBizException("액새스 토큰이 만료 되었습니다.");
                 }
 
                 Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
@@ -80,7 +80,6 @@ public class JwtValidationFilter extends OncePerRequestFilter {
 
     //에러 메시지
     private void errorMessage(HttpServletResponse response, String message) throws IOException {
-
         response.setStatus(HttpStatus.UNAUTHORIZED.value());
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().println(

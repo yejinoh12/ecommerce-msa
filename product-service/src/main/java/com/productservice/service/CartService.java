@@ -1,17 +1,17 @@
-package com.productservice.service.cart;
+package com.productservice.service;
 
+import com.common.dto.product.CartResDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
-import com.common.dto.order.CreateOrderReqDto;
-import com.productservice.domain.cart.Cart;
-import com.productservice.domain.cart.CartItem;
-import com.productservice.domain.product.Product;
+import com.productservice.domain.Cart;
+import com.productservice.domain.CartItem;
+import com.productservice.domain.Product;
 import com.productservice.dto.cart.CartAddDto;
 import com.productservice.dto.cart.CartDto;
 import com.productservice.dto.cart.CartItemDto;
-import com.productservice.repository.cart.CartItemRepository;
-import com.productservice.repository.cart.CartRepository;
-import com.productservice.repository.product.ProductRepository;
+import com.productservice.repository.CartItemRepository;
+import com.productservice.repository.CartRepository;
+import com.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ public class CartService {
     // 장바구니 추가
     public ApiResponse<?> addCartItem(CartAddDto cartAddDto, Long userId) {
 
-        Product product = findProduct(cartAddDto.getP_id());
+        Product product = findProduct(cartAddDto.getProductId());
         Cart cart = getOrCreateCart(userId);
         validateCartItemNotExists(cart, product);
 
@@ -84,7 +84,6 @@ public class CartService {
         Cart cart = getCart(userId);
         cartItemRepository.deleteByCartId(cart.getId());
         cartRepository.delete(cart);
-
         return ApiResponse.ok(200, "장바구니 상품이 모두 삭제되었습니다.", null);
     }
 
@@ -96,52 +95,49 @@ public class CartService {
 
         List<CartItemDto> cartItemDtos = cartItemRepository.findByCartId(cart.getId()).stream()
                 .map(item -> CartItemDto.builder()
-                        .c_item_id(item.getId())
-                        .p_id(item.getProduct().getId())
-                        .p_name(item.getProduct().getProductName())
+                        .cartItemId(item.getId())
+                        .productId(item.getProduct().getId())
+                        .productName(item.getProduct().getProductName())
                         .price(item.getProduct().getPrice())
                         .cnt(item.getCount())
                         .build())
                 .collect(Collectors.toList());
 
         CartDto cartDto = CartDto.builder()
-                .c_id(cart.getId())
+                .cartId(cart.getId())
                 .items(cartItemDtos)
                 .build();
 
         return ApiResponse.ok(200, "장바구니 조회 성공", cartDto);
     }
 
-    /**********************************************************
-     * 주문 서비스 요청 API
-     **********************************************************/
-
-    //장바구니 조회
-    public List<CreateOrderReqDto> getCartItemsForOrder(Long userId) {
+    //주문 서비스에서 장바구니 조회
+    public List<CartResDto> getCartItemsForOrder(Long userId) {
 
         log.info("order-service 장바구니 조회 요청");
-        log.info("userId ={}", userId);
+        log.info("userId = {}", userId);
 
         Cart cart = getCart(userId);
-        List<CartItem> cartItems = cartItemRepository.findByCartId(cart.getId());
 
-        List<CreateOrderReqDto> orderReqDtos = cartItems.stream()
-                .map(item -> new CreateOrderReqDto(
-                        item.getProduct().getId(),
-                        item.getCount(),
-                        item.getProduct().getPrice() * item.getCount()
-                ))
+        List<CartResDto> cartResDtos = cartItemRepository.findByCartId(cart.getId())
+                .stream()
+                .map(item -> CartResDto.builder()
+                        .cartItemId(item.getId())
+                        .productId(item.getProduct().getId())
+                        .productName(item.getProduct().getProductName())
+                        .price(item.getProduct().getPrice()) // 총 가격 계산
+                        .cnt(item.getCount())
+                        .subTotal(item.getProduct().getPrice() * item.getCount()) // 총 가격 계산
+                        .build())
                 .collect(Collectors.toList());
 
         log.info("order-service 장바구니 조회 완료");
 
-        return orderReqDtos;
+        return cartResDtos;
     }
 
-    /**********************************************************
-     * 보조 메서드
-     **********************************************************/
 
+    //검증 메서드
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new BaseBizException("productID가 " + productId + "인 상품 옵션을 찾을 수 없습니다."));

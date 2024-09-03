@@ -11,5 +11,4 @@ import lombok.NoArgsConstructor;
 public class UpdateStockReqDto {
     private Long productId;
     private int cnt;
-    private String action;
 }

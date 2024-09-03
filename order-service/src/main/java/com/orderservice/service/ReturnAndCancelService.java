@@ -1,6 +1,6 @@
 package com.orderservice.service;
 
-import com.common.dto.order.CreateOrderReqDto;
+
 import com.common.dto.order.UpdateStockReqDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
@@ -11,15 +11,11 @@ import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -28,8 +24,6 @@ import java.util.stream.Collectors;
 public class ReturnAndCancelService {
 
     private final ProductServiceClient productServiceClient;
-    private final RedisLockFacade redisLockFacade;
-    private final OrderService orderService;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
@@ -41,7 +35,9 @@ public class ReturnAndCancelService {
             throw new BaseBizException("취소가 불가능 합니다.");
         }
 
-        restoreStock(orderId);
+        List<UpdateStockReqDto> updateStockReqDtos = orderItemRepository.findOrderItemDtosByOrderId(orderId);
+        productServiceClient.updateStock(updateStockReqDtos, "INC");
+
         order.updateStatusToCanceled();
 
         return ApiResponse.ok(200, "주문 취소 성공", null);
@@ -51,40 +47,10 @@ public class ReturnAndCancelService {
     public ApiResponse<String> returnOrder(Long orderId) {
 
         Order order = findOrderById(orderId);
-        checkReturnAvail(order);
-        order.updateStatusToReturning(); // 상태 변경
 
-        return ApiResponse.ok(200, "반품 신청 성공", null);
-    }
-
-    /**********************************************************
-     * 보조 메서드
-     **********************************************************/
-
-    private Order findOrderById(Long orderId) {
-        return orderRepository.findById(orderId)
-                .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));
-    }
-
-    //재고 복구(redis, db)
-    private void restoreStock(Long orderId) {
-        List<UpdateStockReqDto> updateStockReqDtos = orderItemRepository.findOrderItemDtosByOrderId(orderId);
-
-        redisLockFacade.updateStockRedisson(updateStockReqDtos);
-
-        // DB 재고 변경은 비동기 호출(CompletableFuture 사용)
-        CompletableFuture.runAsync(() -> productServiceClient.requestStockSync(updateStockReqDtos))
-                .exceptionally(ex -> {
-                    log.error("Error occurred while syncing stock", ex);
-                    return null;
-                });
-    }
-
-    //반품이 가능 한지 확인
-    private void checkReturnAvail(Order order) {
-
+        //반품 가능 상태 확인
         if (order.getDeliveryStatus() != DeliveryStatus.DELIVERED) {
-            throw new BaseBizException("반품이 불가능합니다. 배송이 완료되지 않았습니다.");
+            throw new BaseBizException("반품 가능 시간이 아닙니다.");
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -93,5 +59,14 @@ public class ReturnAndCancelService {
         if (now.isAfter(returnDeadline)) {
             throw new BaseBizException("반품 기한이 지났습니다.");
         }
+
+        order.updateStatusToReturning(); // 상태 변경
+
+        return ApiResponse.ok(200, "반품 신청 성공", null);
+    }
+
+    private Order findOrderById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));
     }
 }
