@@ -12,16 +12,16 @@
 ### 3. Built With
 
 * Backend
-  [![Java 21][Java]][Java-url] [![Spring Boot][SpringBoot]][SpringBoot-url] [![Spring Cloud][SpringCloud]][SpringCloud-url] [![Spring Data JPA][SpringDataJPA]][SpringDataJPA-url] [![JWT][JWT]][JWT-url]
+ [![Java 21][Java]][Java-url] [![Spring Boot][SpringBoot]][SpringBoot-url] [![Spring Cloud][SpringCloud]][SpringCloud-url] [![Spring Data JPA][SpringDataJPA]][SpringDataJPA-url] [![JWT][JWT]][JWT-url]
 
 * Database
-  [![MySQL][MySQL]][MySQL-url] [![Redis][Redis]][Redis-url]
+ [![MySQL][MySQL]][MySQL-url] [![Redis][Redis]][Redis-url]
 
 * Service Discovery & Communication
-  [![Eureka Server][EurekaServer]][EurekaServer-url] [![Feign Client][FeignClient]][FeignClient-url]
+ [![Eureka Server][EurekaServer]][EurekaServer-url] [![Feign Client][FeignClient]][FeignClient-url]
 
 * Testing
-  [![JUnit 5][JUnit5]][JUnit5-url] [![JMeter][JMeter]][JMeter-url]
+ [![JUnit 5][JUnit5]][JUnit5-url] [![JMeter][JMeter]][JMeter-url]
 
 ## Getting Started (예정)
 
@@ -32,6 +32,7 @@
 
 ### 2. Project Architecture
 ![[image][image]][architecture-url]
+
 ### 3. API documentation (예정)
 
 ### 4. Main Feature
@@ -100,5 +101,5 @@
 [EurekaServer-url]: https://spring.io/projects/spring-cloud-netflix
 [FeignClient]: https://img.shields.io/badge/Feign_Client-6DB33F?style=for-the-badge&logo=spring&logoColor=white
 [FeignClient-url]: https://spring.io/projects/spring-cloud-openfeign
-[erd-url]: https://private-user-images.githubusercontent.com/174220273/364687102-d330acb5-e4cc-4dd1-b736-97f91e6b5a2a.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjU1MjQ3MjUsIm5iZiI6MTcyNTUyNDQyNSwicGF0aCI6Ii8xNzQyMjAyNzMvMzY0Njg3MTAyLWQzMzBhY2I1LWU0Y2MtNGRkMS1iNzM2LTk3ZjkxZTZiNWEyYS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwOTA1JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDkwNVQwODIwMjVaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT02OWNlNzA0ZDlkZjlhNzg4OGVlZTJhMmJjN2Y5MWQ1MmZjZTAxMmNkMTc4NDg5ZDMyY2I4MGY3OTY1YmU5NmY3JlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.QWhsLfWVlHv6dZ8KopE0jP1TA0aiuqI4x6sZ_OrtlE8
+[erd-url]: https://private-user-images.githubusercontent.com/174220273/364687102-d330acb5-e4cc-4dd1-b736-97f91e6b5a2a.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjU1Nzg0NTAsIm5iZiI6MTcyNTU3ODE1MCwicGF0aCI6Ii8xNzQyMjAyNzMvMzY0Njg3MTAyLWQzMzBhY2I1LWU0Y2MtNGRkMS1iNzM2LTk3ZjkxZTZiNWEyYS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwOTA1JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDkwNVQyMzE1NTBaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1mNTZmYzEyYTJiMzkwMDY4Y2ZjOGJkNTExMzExYjhjM2VmZjk4NTZhOTYwNzZlNTZmYjRhMDdlYzE4Y2FhYzRmJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.1KxtUlE6dqS_KBNsezlm9-6g2hHyUrfZRB4Mu78gSSQ
 [architecture-url]: https://private-user-images.githubusercontent.com/174220273/364977919-faa37c3c-7cd5-4aca-938c-fcb1dbdf1bf4.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjU1NzgwOTYsIm5iZiI6MTcyNTU3Nzc5NiwicGF0aCI6Ii8xNzQyMjAyNzMvMzY0OTc3OTE5LWZhYTM3YzNjLTdjZDUtNGFjYS05MzhjLWZjYjFkYmRmMWJmNC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwOTA1JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDkwNVQyMzA5NTZaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0wZjhlMjY3ZDg2ZWE4YTYzMGNmYzUyZTg5OGVmMmUyNTRhNGFmYWYwNzE0NzMxNmNkNjEwYjQ2ZGVmMzc1NDNkJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.DEtFyoMaXMKInj9xNZbUrpUwsc5YVx-0I4mQo3mDDxY
