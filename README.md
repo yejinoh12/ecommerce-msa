@@ -31,7 +31,6 @@
 ![[image][image]][erd-url]
 
 ### 2. Project Architecture
-![[image][image]][architecture-url]
 
 ### 3. API documentation (예정)
 
