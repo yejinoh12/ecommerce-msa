@@ -1,38 +1,25 @@
 <!-- ABOUT THE PROJECT -->
-##  E-commerce MSA Project 🛍️🛒 
+## 1. E-commerce MSA Project 🛒
 
-### 1. Summary
 
-* 이 프로젝트는 **특정 시간대에 오픈된 선착순 상품 구매가 원활하게 이루어지도록 설계된 E-commerce 서비스**입니다. 동시성 문제와 대규모 트래픽 등을 고려하여,  많은 사용자가 동시에 접근하더라도 지연 없이 안정적인 거래가 가능하도록  아키텍처 설계를 고민했습니다.
+ * 기간 : 2024년 8월 ~ 2024년 9월 
+ 
+- 이 프로젝트는 **특정 시간대에 오픈된 선착순 상품 구매가 원활하게 이루어지도록 설계된 E-commerce 서비스** 입니다. **MSA(마이크로서비스 아키텍처)** 를 채택하여 각 서비스의 확장성과 독립성을 높였습니다. 동시성 문제와 대규모 트래픽을 효과적으로 처리하기 위해 다양한 관점에서 고민하였고, 기술적 고민과 선택이 반영되었습니다.
 
-### 2. Period
+ - Built With
+    [![Java 21][Java]][Java-url] [![Spring Boot][SpringBoot]][SpringBoot-url] [![Spring Cloud][SpringCloud]][SpringCloud-url] [![Spring Data JPA][SpringDataJPA]][SpringDataJPA-url] [![JWT][JWT]][JWT-url] [![MySQL][MySQL]][MySQL-url] [![Redis][Redis]][Redis-url] [![Eureka Server][EurekaServer]][EurekaServer-url] [![Feign Client][FeignClient]][FeignClient-url] [![JUnit 5][JUnit5]][JUnit5-url] [![JMeter][JMeter]][JMeter-url]
 
-* 2024년 8월 ~ 2024년 9월 ( 1人 )
+## 2. Getting Started
 
-### 3. Built With
-
-* Backend
- [![Java 21][Java]][Java-url] [![Spring Boot][SpringBoot]][SpringBoot-url] [![Spring Cloud][SpringCloud]][SpringCloud-url] [![Spring Data JPA][SpringDataJPA]][SpringDataJPA-url] [![JWT][JWT]][JWT-url]
-
-* Database
- [![MySQL][MySQL]][MySQL-url] [![Redis][Redis]][Redis-url]
-
-* Service Discovery & Communication
- [![Eureka Server][EurekaServer]][EurekaServer-url] [![Feign Client][FeignClient]][FeignClient-url]
-
-* Testing
- [![JUnit 5][JUnit5]][JUnit5-url] [![JMeter][JMeter]][JMeter-url]
-
-## Getting Started (예정)
-
-##  System Design 
+##  3. System Design 
 
 ### 1. ER Diagram
 ![[image][image]][erd-url]
 
 ### 2. Project Architecture
+![[image][image]][architecture-url]
 
-### 3. API documentation (예정)
+### 3. API documentation
 
 ### 4. Main Feature
 
@@ -75,7 +62,7 @@
 		- 주문 상세 조회
 		- 주문 취소 및 반품
 
-## Trouble Shooting (예정)
+## 4. Trouble Shooting
 `
 <!-- MARKDOWN LINKS & IMAGES -->
 [Java]: https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white
@@ -100,5 +87,5 @@
 [EurekaServer-url]: https://spring.io/projects/spring-cloud-netflix
 [FeignClient]: https://img.shields.io/badge/Feign_Client-6DB33F?style=for-the-badge&logo=spring&logoColor=white
 [FeignClient-url]: https://spring.io/projects/spring-cloud-openfeign
-[erd-url]: https://private-user-images.githubusercontent.com/174220273/364687102-d330acb5-e4cc-4dd1-b736-97f91e6b5a2a.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjU1Nzg0NTAsIm5iZiI6MTcyNTU3ODE1MCwicGF0aCI6Ii8xNzQyMjAyNzMvMzY0Njg3MTAyLWQzMzBhY2I1LWU0Y2MtNGRkMS1iNzM2LTk3ZjkxZTZiNWEyYS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwOTA1JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDkwNVQyMzE1NTBaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT1mNTZmYzEyYTJiMzkwMDY4Y2ZjOGJkNTExMzExYjhjM2VmZjk4NTZhOTYwNzZlNTZmYjRhMDdlYzE4Y2FhYzRmJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.1KxtUlE6dqS_KBNsezlm9-6g2hHyUrfZRB4Mu78gSSQ
-[architecture-url]: https://private-user-images.githubusercontent.com/174220273/364977919-faa37c3c-7cd5-4aca-938c-fcb1dbdf1bf4.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjU1NzgwOTYsIm5iZiI6MTcyNTU3Nzc5NiwicGF0aCI6Ii8xNzQyMjAyNzMvMzY0OTc3OTE5LWZhYTM3YzNjLTdjZDUtNGFjYS05MzhjLWZjYjFkYmRmMWJmNC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwOTA1JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDkwNVQyMzA5NTZaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0wZjhlMjY3ZDg2ZWE4YTYzMGNmYzUyZTg5OGVmMmUyNTRhNGFmYWYwNzE0NzMxNmNkNjEwYjQ2ZGVmMzc1NDNkJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.DEtFyoMaXMKInj9xNZbUrpUwsc5YVx-0I4mQo3mDDxY
+[erd-url]:https://private-user-images.githubusercontent.com/174220273/364687102-d330acb5-e4cc-4dd1-b736-97f91e6b5a2a.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjU2ODY3NzEsIm5iZiI6MTcyNTY4NjQ3MSwicGF0aCI6Ii8xNzQyMjAyNzMvMzY0Njg3MTAyLWQzMzBhY2I1LWU0Y2MtNGRkMS1iNzM2LTk3ZjkxZTZiNWEyYS5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwOTA3JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDkwN1QwNTIxMTFaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT0yN2FlNjJkOTM0ODBkMDRhOGJjOWY1N2RmMzYwY2E3OTg3ODcxMjA0MWMxMzYyNTIwODFmOTMzOTVmZGJiMTgxJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.7F8ej96h9ZeKc9t9xxL1IaL1RXcxBv1o81m7QbIRq3Y
+[architecture-url]: https://private-user-images.githubusercontent.com/174220273/365343901-65e33c97-e3d9-4fc2-bb2f-990b19eabcfd.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MjU2ODY3MjAsIm5iZiI6MTcyNTY4NjQyMCwicGF0aCI6Ii8xNzQyMjAyNzMvMzY1MzQzOTAxLTY1ZTMzYzk3LWUzZDktNGZjMi1iYjJmLTk5MGIxOWVhYmNmZC5wbmc_WC1BbXotQWxnb3JpdGhtPUFXUzQtSE1BQy1TSEEyNTYmWC1BbXotQ3JlZGVudGlhbD1BS0lBVkNPRFlMU0E1M1BRSzRaQSUyRjIwMjQwOTA3JTJGdXMtZWFzdC0xJTJGczMlMkZhd3M0X3JlcXVlc3QmWC1BbXotRGF0ZT0yMDI0MDkwN1QwNTIwMjBaJlgtQW16LUV4cGlyZXM9MzAwJlgtQW16LVNpZ25hdHVyZT01YzRmZjVhMDUzODI1N2Y5MWYwZjRhYTlhYmYyNGQ2YTFlZmM1Yzk2ZDZjODg5MzQ1NjNjNzNiOGI3ZjIxZGMxJlgtQW16LVNpZ25lZEhlYWRlcnM9aG9zdCZhY3Rvcl9pZD0wJmtleV9pZD0wJnJlcG9faWQ9MCJ9.wMXhAy_CqY12PDCHS7cBK7BHeo91xlvMBVrR8vi8ysQ
