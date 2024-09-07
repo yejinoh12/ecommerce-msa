@@ -1,17 +1,34 @@
 <!-- ABOUT THE PROJECT -->
-## 1. E-commerce MSA Project 🛒
+
+## 1. E-commerce MSA Project 
 
 
  * 기간 : 2024년 8월 ~ 2024년 9월 
  
-- 이 프로젝트는 **특정 시간대에 오픈된 선착순 상품 구매가 원활하게 이루어지도록 설계된 E-commerce 서비스** 입니다. **MSA(마이크로서비스 아키텍처)** 를 채택하여 각 서비스의 확장성과 독립성을 높였습니다. 동시성 문제와 대규모 트래픽을 효과적으로 처리하기 위해 다양한 관점에서 고민하였고, 기술적 고민과 선택이 반영되었습니다.
+- 이 프로젝트는 **특정 시간대에 오픈된 선착순 상품 구매가 원활하게 이루어지도록 설계된 E-commerce 서비스** 입니다. 마이크로 서비스 아키텍처를 채택하여 각 서비스의 확장성과 독립성을 높였고, 동시성 문제와 대규모 트래픽을 효과적으로 처리하기 위해 기술적 고민과 선택이 반영되었습니다.
 
- - Built With
-    [![Java 21][Java]][Java-url] [![Spring Boot][SpringBoot]][SpringBoot-url] [![Spring Cloud][SpringCloud]][SpringCloud-url] [![Spring Data JPA][SpringDataJPA]][SpringDataJPA-url] [![JWT][JWT]][JWT-url] [![MySQL][MySQL]][MySQL-url] [![Redis][Redis]][Redis-url] [![Eureka Server][EurekaServer]][EurekaServer-url] [![Feign Client][FeignClient]][FeignClient-url] [![JUnit 5][JUnit5]][JUnit5-url] [![JMeter][JMeter]][JMeter-url]
+## 2. Built With
 
-## 2. Getting Started
+ - **Backend** 
+	 - Java : JDK 21
+	-  Spring Boot : 3.3.2
+	-  Spring Data JPA
+	-  Spring Security 
+	-  Spring Cloud Netflix  Eureka  
+	-  Spring Cloud Gateway 
+	-  Spring Cloud OpenFeign 
+	-  JWT : 0.11.5
+	
+ - **Database**
+	 -   MySQL
+	-   Redis : 3.1.2
+ - **Testing**
+	 - Junit5
+	 - Jmeter
 
-##  3. System Design 
+
+
+##  2. System Design 
 
 ### 1. ER Diagram
 ![[image][image]][erd-url]
@@ -20,6 +37,8 @@
 ![[image][image]][architecture-url]
 
 ### 3. API documentation
+
+ - [API 문서 바로가기](https://documenter.getpostman.com/view/36704792/2sAXjRVpGJ)
 
 ### 4. Main Feature
 
@@ -62,7 +81,7 @@
 		- 주문 상세 조회
 		- 주문 취소 및 반품
 
-## 4. Trouble Shooting
+## 3. Trouble Shooting
 `
 <!-- MARKDOWN LINKS & IMAGES -->
 [Java]: https://img.shields.io/badge/Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white
