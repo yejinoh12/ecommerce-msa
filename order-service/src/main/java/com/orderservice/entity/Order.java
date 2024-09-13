@@ -23,6 +23,7 @@ public class Order extends BaseEntity {
     @Column(nullable = false)
     private int totalPrice;
 
+    @Setter
     @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus;
 
@@ -37,7 +38,7 @@ public class Order extends BaseEntity {
     }
 
     public static Order createOrder(Long userId, int totalPrice) {
-        return new Order(userId, totalPrice, OrderStatus.ORDERED, DeliveryStatus.PENDING);
+        return new Order(userId, totalPrice, OrderStatus.PAYMENT_IN_PROGRESS, DeliveryStatus.PENDING);
     }
 
     /**********************************************************
@@ -50,7 +51,7 @@ public class Order extends BaseEntity {
     }
 
     public void updateStatusToReturning() {
-        this.orderStatus = OrderStatus.RETURN_ING;
+        this.orderStatus = OrderStatus.RETURN_REQ;
         this.deliveryStatus = DeliveryStatus.CANCELED;
     }
 

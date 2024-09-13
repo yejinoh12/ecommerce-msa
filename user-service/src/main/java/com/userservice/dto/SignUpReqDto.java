@@ -17,8 +17,10 @@ public class SignUpReqDto {
     @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[~!@#$%^&*()+|=])[A-Za-z\\d~!@#$%^&*()+|=]{8,16}$", message = "비밀번호는 8 ~ 16자 영문 대소문자, 숫자, 특수문자를 사용하세요.")
     private String password;
 
+    @NotEmpty
     private String phoneNumber;
 
+    @NotEmpty
     private String address;
 
 }

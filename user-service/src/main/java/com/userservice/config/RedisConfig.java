@@ -18,6 +18,14 @@ public class RedisConfig {
     @Value("${spring.data.redis.port}")
     private int port;
 
+    @Value("${spring.data.redis.database1}")
+    private int databaseIndex1; // 데이터베이스 인덱스 추가
+
+    @Value("${spring.data.redis.database2}")
+    private int databaseIndex2; // 데이터베이스 인덱스 추가
+
+
+
     private LettuceConnectionFactory createConnectionFactoryWith(int index) {
         RedisStandaloneConfiguration redisStandaloneConfiguration = new RedisStandaloneConfiguration();
         redisStandaloneConfiguration.setHostName(host);
@@ -26,14 +34,10 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisStandaloneConfiguration);
     }
 
-    /**********************************************************
-     * 리프레시 토큰 레디스 설정
-     **********************************************************/
-
     @Bean
     @Primary
     LettuceConnectionFactory refreshTokenConnectionFactory() {
-        return createConnectionFactoryWith(0);
+        return createConnectionFactoryWith(databaseIndex1);
     }
 
     @Bean
@@ -41,15 +45,10 @@ public class RedisConfig {
         return new StringRedisTemplate(refreshTokenConnectionFactory);
     }
 
-
-    /**********************************************************
-     * 이메일 인증 레디스 설정
-     **********************************************************/
-
     @Bean
     @Qualifier("email")
     LettuceConnectionFactory emailConnectionFactory() {
-        return createConnectionFactoryWith(1);
+        return createConnectionFactoryWith(databaseIndex2);
     }
 
     @Bean

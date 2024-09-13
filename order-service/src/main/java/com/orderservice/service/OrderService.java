@@ -1,28 +1,30 @@
 package com.orderservice.service;
 
-import com.common.dto.order.StockSyncReqDto;
+
+
+import com.common.dto.order.PurchaseAvailReqDto;
 import com.common.dto.order.UpdateStockReqDto;
-import com.common.exception.BaseBizException;
-import com.common.response.ApiResponse;
-import com.common.dto.order.CreateOrderReqDto;
+import com.common.dto.payment.PaymentReqDto;
+import com.common.dto.product.CartResDto;
 import com.common.dto.product.ProductInfoDto;
 import com.common.dto.user.UserInfoDto;
+import com.common.exception.BaseBizException;
+import com.common.response.ApiResponse;
+import com.orderservice.client.PaymentServiceClient;
 import com.orderservice.client.ProductServiceClient;
 import com.orderservice.client.UserServiceClient;
-import com.orderservice.dto.OrderDetailsDto;
-import com.orderservice.dto.OrderItemDto;
-import com.orderservice.dto.OrderResDto;
+import com.orderservice.dto.*;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
-import com.orderservice.exception.PaymentFailureException;
+import com.orderservice.kafka.KafkaProducer;
 import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
-import com.orderservice.repository.RedisStockRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,57 +34,62 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class OrderService {
 
-    private final PaymentService paymentService;
-
     private final ProductServiceClient productServiceClient;
     private final UserServiceClient userServiceClient;
+    //private final PaymentServiceClient paymentServiceClient;
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final RedisLockFacade redisLockFacade;
-    private final RedisStockService redisStockService;
-    private final RedisStockRepository redisStockRepository;
 
-    /**********************************************************
-     * 비즈니스 로직
-     **********************************************************/
+    private final KafkaProducer kafkaProducer;
+
+    //주문 전 장바구니 조회
+    //수령인 정보와 배송지 정보를 추가해야함
+    public ApiResponse<OrderPreviewResDto> getOrderItemsFromCart(Long userId) {
+
+        log.info("주문 전 장바구니 조회 : 사용자 ID = {}", userId);
+
+        //장바구니에 있는 아이템 조회 요청
+        List<CartResDto> cartResDtos = productServiceClient.getOrderItems(userId);
+
+        //최종 가격 계산
+        int totalOrderPrice = cartResDtos.stream()
+                .mapToInt(cartResDto -> cartResDto.getUnitPrice() * cartResDto.getCnt())
+                .sum();
+
+        //DTO 생성
+        OrderPreviewResDto responseDto = OrderPreviewResDto.builder()
+                .totalPrice(totalOrderPrice)
+                .orderReqItems(cartResDtos)
+                .build();
+
+        return new ApiResponse<>(201, "결제를 진행해주세요.", responseDto);
+    }
 
     //주문
     @Transactional
-    public ApiResponse<OrderResDto> createOrder(Long userId) {
+    public ApiResponse<OrderResDto> createOrder(List<OrderReqDto> orderReqDtos, Long userId) {
 
         log.info("주문 처리 시작: 사용자 ID = {}", userId);
 
-        List<CreateOrderReqDto> dtos = productServiceClient.getOrderItems(userId);
-        int totalPrice = calculateTotalPrice(dtos);
+        //상품 시간 및 재고 검증 요청
+        validateProductStockAndEventTimes(orderReqDtos);
+
+        //최종 가격 계산
+        int totalPrice = orderReqDtos.stream()
+                .mapToInt(orderReqDto -> orderReqDto.getUnitPrice() * orderReqDto.getCnt())
+                .sum();
+
+        //주문 및 주문 아이템 생성
         Order order = createAndSaveOrder(userId, totalPrice);
+        createOrderItems(order, orderReqDtos);
 
-        try {
+        // 결제 요청
+        PaymentReqDto paymentRequest = new PaymentReqDto(order.getId(), userId, totalPrice);
+        kafkaProducer.sendPaymentRequest(paymentRequest);
 
-            decreaseStockInRedis(dtos);                              //레디스 재고 감소
-            paymentService.simulatePaymentProcessing(order.getId()); //고객 이탈 시뮬레이션(실패시 PaymentFailureException 발생)
-            createOrderItems(order, dtos);                           //주문 아이템 생성
-
-            requestStockSync(dtos, "DEC");                    //DB 재고 감소 요청(비동기)
-            productServiceClient.deleteCartAfterOrder(userId);      //장바구니 삭제 요청
-
-        } catch (PaymentFailureException e) {
-
-            increaseStockInRedis(dtos);                             //실패 시 재고 롤백(DB 요청 전이기 때문에 DB 증가 요청을 보낼 필요 없음)
-            log.error("결제 또는 재고 처리 실패: {}", e.getMessage());
-            throw new BaseBizException(e.getMessage());
-
-        }catch (Exception e){
-            log.error("주문에 실패했습니다. : {}", e.getMessage());
-        }
-
-        log.info("주문 완료: 주문 ID = {}, 사용자 ID = {}", order.getId(), userId);
-        return new ApiResponse<>(201, "주문이 완료되었습니다.", OrderResDto.from(order, userId));
+        return new ApiResponse<>(201, "주문 요청 완료", OrderResDto.from(order));
     }
-
-    /**********************************************************
-     * 보조 메서드
-     **********************************************************/
 
     //주문 생성
     private Order createAndSaveOrder(Long userId, int totalPrice) {
@@ -92,46 +99,19 @@ public class OrderService {
         return order;
     }
 
-    //총 가격 계산
-    private int calculateTotalPrice(List<CreateOrderReqDto> orderReqDtos) {
-        return orderReqDtos.stream()
-                .mapToInt(CreateOrderReqDto::getSubtotal)
-                .sum();
-    }
-
     //주문 아이템 생성
-    private void createOrderItems(Order order, List<CreateOrderReqDto> orderReqDtos) {
+    private void createOrderItems(Order order, List<OrderReqDto> orderReqDtos) {
 
-        for (CreateOrderReqDto reqDto : orderReqDtos) {
+        for (OrderReqDto orderReqDto : orderReqDtos) {
             OrderItem orderItem = OrderItem.createOrderItem(
                     order,
-                    reqDto.getP_id(),
-                    reqDto.getSubtotal() / reqDto.getCnt(),
-                    reqDto.getCnt()
+                    orderReqDto.getProductId(),
+                    orderReqDto.getUnitPrice(),
+                    orderReqDto.getCnt()
             );
-            orderItemRepository.save(orderItem); // 데이터베이스에 주문 아이템 저장
+            orderItemRepository.save(orderItem);
         }
     }
-
-    //레디스 상품 재고 감소
-    private void decreaseStockInRedis(List<CreateOrderReqDto> dtos) {
-        List<UpdateStockReqDto> decreaseStockReqDtos = dtos.stream()
-                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "DEC"))
-                .collect(Collectors.toList());
-        redisLockFacade.updateStockRedisson(decreaseStockReqDtos);
-    }
-
-    //레디스 상품 재고 증가 (주문 실패 시 재고 증가)
-    private void increaseStockInRedis(List<CreateOrderReqDto> dtos) {
-        List<UpdateStockReqDto> increaseStockReqDtos = dtos.stream()
-                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), "INC"))
-                .collect(Collectors.toList());
-        redisLockFacade.updateStockRedisson(increaseStockReqDtos);
-    }
-
-    /**********************************************************
-     * 주문 관련 조회 메서드
-     **********************************************************/
 
     //주문 목록 조회
     public ApiResponse<List<OrderResDto>> viewOrderList(Long userId) {
@@ -174,7 +154,6 @@ public class OrderService {
                 .map(OrderItem::getProductId)
                 .collect(Collectors.toList());
 
-        //상품 요청 API 호출
         List<ProductInfoDto> productInfoDtos = productServiceClient.getProductInfos(productIds);
 
         Map<Long, ProductInfoDto> productInfoMap = productInfoDtos.stream()
@@ -191,16 +170,15 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
-    /**********************************************************
-     * 상품 재고 DB 변경 요청 API
-     **********************************************************/
 
-    //데이터베이스와의 재고 동기화
-    public void requestStockSync(List<CreateOrderReqDto> dtos, String action) {
-        log.info("상품 DB 재고 감소 요청");
-        List<UpdateStockReqDto> updateStockReqDtos = dtos.stream()
-                .map(dto -> new UpdateStockReqDto(dto.getP_id(), dto.getCnt(), action))
-                .collect(Collectors.toList());
-        productServiceClient.requestStockSync(updateStockReqDtos);
+    //상품 구매 가능 여부 검증
+    public void validateProductStockAndEventTimes(List<OrderReqDto> orderReqDtos) {
+
+        log.info("상품 구매 가능 여부 확인 요청 API 호출");
+        List<PurchaseAvailReqDto> purchaseAvailReqDtos = orderReqDtos.stream()
+                .map(orderReqDto -> new PurchaseAvailReqDto(orderReqDto.getProductId(), orderReqDto.getCnt()))
+                .toList();
+
+        productServiceClient.validateProductStockAndEventTimes(purchaseAvailReqDtos);
     }
 }

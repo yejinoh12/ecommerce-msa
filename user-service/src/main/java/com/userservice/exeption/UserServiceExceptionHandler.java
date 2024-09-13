@@ -33,15 +33,4 @@ public class UserServiceExceptionHandler {
 
         return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
     }
-
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiResponse<String>> handleTokenAuthenticationException(AuthenticationException e) {
-        ApiResponse<String> responseMessage = ApiResponse.<String>builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .message(e.getMessage())
-                .data(null)
-                .build();
-
-        return new ResponseEntity<>(responseMessage, HttpStatus.UNAUTHORIZED);
-    }
 }

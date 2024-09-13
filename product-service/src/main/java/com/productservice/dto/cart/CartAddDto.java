@@ -4,10 +4,8 @@ import lombok.*;
 
 @Data
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class CartAddDto {
-    private Long p_id;
+    private Long productId;
     private int cnt;
 
 }

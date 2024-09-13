@@ -59,6 +59,11 @@ dependencies {
     //redisson
     implementation group: 'org.redisson', name: 'redisson', version: '3.35.0'
 
+    //kafka
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // Jackson Databind
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.0'
 }
 
 dependencyManagement {

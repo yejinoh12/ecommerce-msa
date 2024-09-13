@@ -1,7 +1,7 @@
 package com.userservice.util;
 
+import com.common.exception.BaseBizException;
 import com.userservice.entity.UserRoleEnum;
-import com.userservice.exeption.AuthenticationException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -48,7 +48,7 @@ public class JwtUtil {
 
 
     /**********************************************************
-     * 액세스 토큰
+     * access token
      **********************************************************/
 
     public String createAccessToken(String userId, UserRoleEnum role) {
@@ -70,7 +70,7 @@ public class JwtUtil {
     }
 
     /**********************************************************
-     * 리프레시 토큰 메서드
+     * refresh token
      **********************************************************/
 
     //리프레시 토큰 발급
@@ -137,7 +137,7 @@ public class JwtUtil {
     }
 
     /**********************************************************
-     * 검증 및 기타 기능들
+     * etc
      **********************************************************/
 
     // 토큰 검증
@@ -163,7 +163,7 @@ public class JwtUtil {
             return tokenValue.substring(7);
         }
         log.error("토큰을 찾을 수 없습니다.");
-        throw new AuthenticationException("유효한 토큰이 없습니다. 다시 로그인 해주세요.", HttpStatus.BAD_REQUEST);
+        throw new BaseBizException("유효한 토큰이 없습니다. 다시 로그인 해주세요.", HttpStatus.BAD_REQUEST);
     }
 
     //토큰에서 user 정보 추출

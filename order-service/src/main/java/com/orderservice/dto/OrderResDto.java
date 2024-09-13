@@ -1,19 +1,19 @@
 package com.orderservice.dto;
 
+import com.esotericsoftware.kryo.util.Null;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.statusEnum.DeliveryStatus;
 import com.orderservice.entity.statusEnum.OrderStatus;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderResDto {
 
     private Long orderId;
@@ -22,6 +22,14 @@ public class OrderResDto {
     private int totalPrice;
     private OrderStatus orderStatus;
     private DeliveryStatus deliveryStatus;
+
+    public static OrderResDto from(Order order) {
+        return OrderResDto.builder()
+                .orderId(order.getId())
+                .orderDate(order.getCreatedAt())
+                .totalPrice(order.getTotalPrice())
+                .build();
+    }
 
     public static OrderResDto from(Order order, Long userId) {
         return OrderResDto.builder()
@@ -33,5 +41,4 @@ public class OrderResDto {
                 .deliveryStatus(order.getDeliveryStatus())
                 .build();
     }
-
 }

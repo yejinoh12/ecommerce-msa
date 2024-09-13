@@ -60,13 +60,11 @@ public class WebSecurityConfig {
                 sessionManagement.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         );
 
+        //API gateway 사용으로 모든 엔드포인트 접근 허용
         http.authorizeHttpRequests((authorizeHttpRequests) ->
                 authorizeHttpRequests
-                        .requestMatchers("/user/signup").permitAll() //요청 모두 접근 허가
-                        .requestMatchers("/user/login").permitAll()
-                        .requestMatchers("/user/**").permitAll()
-                        .requestMatchers("/email/**").permitAll()
-                        .anyRequest().authenticated() // 그 외 모든 요청 인증처리
+                        .requestMatchers("/**").permitAll()
+                        .anyRequest().authenticated()
         );
 
         // 필터 관리

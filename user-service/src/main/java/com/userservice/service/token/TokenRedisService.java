@@ -8,20 +8,24 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class TokenRedisService {
 
-    private final StringRedisTemplate refreshTokenRedisTemplate; // 데이터베이스 인덱스 0 사용
+    private final StringRedisTemplate refreshTokenRedisTemplate;
+    protected static final String PREFIX = "refresh:";
 
-    //토큰 저장
+    // 토큰 저장
     public void setRefreshToken(String userId, String token) {
-        refreshTokenRedisTemplate.opsForValue().set(userId, token);
+        String key = PREFIX + userId;
+        refreshTokenRedisTemplate.opsForValue().set(key, token);
     }
 
-    //토큰 조회
+    // 토큰 조회
     public String getRefreshToken(String userId) {
-        return refreshTokenRedisTemplate.opsForValue().get(userId);
+        String key = PREFIX + userId;
+        return refreshTokenRedisTemplate.opsForValue().get(key);
     }
 
-    //토큰 삭제
+    // 토큰 삭제
     public void deleteRefreshToken(String userId) {
-        refreshTokenRedisTemplate.delete(userId);
+        String key = PREFIX + userId;
+        refreshTokenRedisTemplate.delete(key);
     }
 }
