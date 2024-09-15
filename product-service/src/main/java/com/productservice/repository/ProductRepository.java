@@ -1,6 +1,6 @@
 package com.productservice.repository;
 
-import com.productservice.domain.Product;
+import com.productservice.entity.Product;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

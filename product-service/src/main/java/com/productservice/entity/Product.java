@@ -1,4 +1,4 @@
-package com.productservice.domain;
+package com.productservice.entity;
 
 import com.common.entity.BaseEntity;
 import com.common.exception.BaseBizException;
@@ -30,14 +30,40 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private int stock;
 
+    //상품 구매 가능 시간
     private LocalDateTime startTime;
+
+    // 현재 재고가 있는지 확인
+    public boolean hasStock() {
+        return this.stock > 0;
+    }
+
+    // 요청된 수량에 대해 재고가 충분한지 확인
+    public boolean hasEnoughStock(int quantity) {
+        return this.stock >= quantity;
+    }
+
+    // 판매시간 검증
+    public boolean isSaleTimeActive(LocalDateTime currentTime) {
+        return currentTime.isAfter(startTime) || currentTime.isEqual(startTime);
+    }
+
+    //재고가 1개 이상 있고, 구매 가능 시간인 경우
+    public boolean isAvailable(LocalDateTime currentTime) {
+        return hasStock() && isSaleTimeActive(currentTime);
+    }
 
     //재고 감소
     public void decreaseStock(int quantity) {
 
-        if (this.stock < quantity) {
+        if (!isAvailable(LocalDateTime.now())) {
+            throw new BaseBizException("구매 가능 시간이 아닙니다.");
+        }
+
+        if (!hasEnoughStock(quantity)) {
             throw new BaseBizException("재고 부족으로 주문에 실패했습니다.");
         }
+
         this.stock -= quantity;
     }
 
@@ -46,23 +72,4 @@ public class Product extends BaseEntity {
         this.stock += quantity;
     }
 
-    // 현재 재고가 있는지 확인
-    public boolean hasStock() {
-        return this.stock > 0;
-    }
-
-    // 요청된 수량에 대해 재고가 충분한지 확인
-    public boolean hasSufficientStock(int quantity) {
-        return this.stock >= quantity;
-    }
-
-    // 현재 시간이 판매 시작 시간 이후인지 확인
-    public boolean isSaleTimeActive(LocalDateTime currentTime) {
-        return currentTime.isAfter(startTime) || currentTime.isEqual(startTime);
-    }
-
-    // 상품이 현재 시간에 구매 가능하고 수량이 1 이상인 경우
-    public boolean isAvailable(LocalDateTime currentTime) {
-        return hasStock() && isSaleTimeActive(currentTime);
-    }
 }

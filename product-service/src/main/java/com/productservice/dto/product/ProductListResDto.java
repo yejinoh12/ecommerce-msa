@@ -1,6 +1,6 @@
 package com.productservice.dto.product;
 
-import com.productservice.domain.Product;
+import com.productservice.entity.Product;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Getter
 @Builder
-public class ProductListDto implements Serializable {
+public class ProductListResDto implements Serializable {
 
     private Long p_id;
     private String p_name;
@@ -17,8 +17,8 @@ public class ProductListDto implements Serializable {
     private boolean hasStock;
     private boolean isInSaleTime;
 
-    public static ProductListDto from(Product product) {
-        return ProductListDto.builder()
+    public static ProductListResDto from(Product product) {
+        return ProductListResDto.builder()
                 .p_id(product.getId())
                 .p_name(product.getName())
                 .price(product.getPrice())

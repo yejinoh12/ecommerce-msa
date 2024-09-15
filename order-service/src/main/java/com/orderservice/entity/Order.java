@@ -1,8 +1,6 @@
 package com.orderservice.entity;
 
 import com.common.entity.BaseEntity;
-import com.orderservice.entity.statusEnum.DeliveryStatus;
-import com.orderservice.entity.statusEnum.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
 

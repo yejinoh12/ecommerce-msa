@@ -1,4 +1,4 @@
-package com.productservice.domain;
+package com.productservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;

@@ -6,7 +6,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class CartDto {
+public class CartResDto {
     private int totalPrice;
-    private List<CartItemDto> items;
+    private List<CartItemResDto> items;
 }

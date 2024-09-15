@@ -4,9 +4,8 @@ import lombok.*;
 
 @Data
 @Builder
-public class CartAddDto {
+public class CartAddReqDto {
     private Long productId;
     private int cnt;
-
 }
 

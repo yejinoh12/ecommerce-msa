@@ -1,7 +1,7 @@
 package com.productservice.controller;
 
 import com.common.utils.ParseRequestUtil;
-import com.productservice.dto.cart.CartAddDto;
+import com.productservice.dto.cart.CartAddReqDto;
 import com.productservice.service.CartService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -19,21 +19,21 @@ public class CartController {
 
     //장바구니 담기
     @PostMapping("/add")
-    public ResponseEntity<?> addCartItem(@RequestBody CartAddDto cartAddDto, HttpServletRequest request) {
+    public ResponseEntity<?> addCartItem(@RequestBody CartAddReqDto cartAddReqDto, HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addCartItem(cartAddDto, userId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(cartService.addCartItem(cartAddReqDto, userId));
     }
 
     //장바구니 상품 수량 증가
-    @GetMapping("/increase/{cart_item_id}")
-    public ResponseEntity<?> incrementCartItem(@PathVariable("cart_item_id") Long cartItemId, HttpServletRequest request) {
+    @GetMapping("/increase/{cartItemId}")
+    public ResponseEntity<?> incrementCartItem(@PathVariable("cartItemId") Long cartItemId, HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
         return ResponseEntity.ok(cartService.incrementCartItem(cartItemId, userId));
     }
 
     //장바구니 상품 수량 감소
-    @GetMapping("/decrease/{cart_item_id}")
-    public ResponseEntity<?> decrementCartItem(@PathVariable("cart_item_id") Long cartItemId, HttpServletRequest request) {
+    @GetMapping("/decrease/{cartItemId}")
+    public ResponseEntity<?> decrementCartItem(@PathVariable("cartItemId") Long cartItemId, HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
         return ResponseEntity.ok(cartService.decreaseCartItem(cartItemId, userId));
     }
@@ -51,10 +51,6 @@ public class CartController {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
         return ResponseEntity.ok(cartService.getMyCart(userId));
     }
-
-    /**
-     * 주문 서비스 요청 API
-     */
 
     //장바구니 조회
     @GetMapping("/get-items")

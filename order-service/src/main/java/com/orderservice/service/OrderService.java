@@ -1,16 +1,11 @@
 package com.orderservice.service;
 
-
-
-import com.common.dto.order.PurchaseAvailReqDto;
-import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.payment.PaymentReqDto;
 import com.common.dto.product.CartResDto;
 import com.common.dto.product.ProductInfoDto;
 import com.common.dto.user.UserInfoDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
-import com.orderservice.client.PaymentServiceClient;
 import com.orderservice.client.ProductServiceClient;
 import com.orderservice.client.UserServiceClient;
 import com.orderservice.dto.*;
@@ -24,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,12 +30,17 @@ public class OrderService {
 
     private final ProductServiceClient productServiceClient;
     private final UserServiceClient userServiceClient;
-    //private final PaymentServiceClient paymentServiceClient;
 
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
 
     private final KafkaProducer kafkaProducer;
+    private final StockCacheService stockCacheService;
+
+    //바로 구매
+    public ApiResponse<OrderResDto> directPurchase(OrderReqDto orderReqDto, Long userId) {
+        return new ApiResponse<>(201, "결제를 진행해주세요.", null);
+    }
 
     //주문 전 장바구니 조회
     //수령인 정보와 배송지 정보를 추가해야함
@@ -68,12 +67,14 @@ public class OrderService {
 
     //주문
     @Transactional
-    public ApiResponse<OrderResDto> createOrder(List<OrderReqDto> orderReqDtos, Long userId) {
+    public ApiResponse<OrderResDto> orderFromCart(List<OrderReqDto> orderReqDtos, Long userId) {
 
         log.info("주문 처리 시작: 사용자 ID = {}", userId);
 
-        //상품 시간 및 재고 검증 요청
-        validateProductStockAndEventTimes(orderReqDtos);
+        //레디스 재고 감소
+        for(OrderReqDto orderReqDto : orderReqDtos){
+            stockCacheService.decreaseStock(orderReqDto.getProductId(), orderReqDto.getCnt());
+        }
 
         //최종 가격 계산
         int totalPrice = orderReqDtos.stream()
@@ -163,22 +164,10 @@ public class OrderService {
                 .map(orderItem -> {
                     ProductInfoDto productInfoDto = productInfoMap.get(orderItem.getProductId());
                     if (productInfoDto == null) {
-                        throw new BaseBizException("productOptionID " + orderItem.getProductId() + "에 대한 상품 정보를 찾을 수 없습니다.");
+                        throw new BaseBizException("productID " + orderItem.getProductId() + "를 찾을 수 없습니다.");
                     }
                     return OrderItemDto.from(productInfoDto, orderItem); //dto 반환
                 })
                 .collect(Collectors.toList());
-    }
-
-
-    //상품 구매 가능 여부 검증
-    public void validateProductStockAndEventTimes(List<OrderReqDto> orderReqDtos) {
-
-        log.info("상품 구매 가능 여부 확인 요청 API 호출");
-        List<PurchaseAvailReqDto> purchaseAvailReqDtos = orderReqDtos.stream()
-                .map(orderReqDto -> new PurchaseAvailReqDto(orderReqDto.getProductId(), orderReqDto.getCnt()))
-                .toList();
-
-        productServiceClient.validateProductStockAndEventTimes(purchaseAvailReqDtos);
     }
 }

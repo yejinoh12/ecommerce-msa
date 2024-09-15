@@ -6,7 +6,7 @@ import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
 import com.orderservice.client.ProductServiceClient;
 import com.orderservice.entity.Order;
-import com.orderservice.entity.statusEnum.DeliveryStatus;
+import com.orderservice.entity.DeliveryStatus;
 import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +21,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ReturnAndCancelService {
+public class CancelService {
 
+    private final StockCacheService stockCacheService;
     private final ProductServiceClient productServiceClient;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
@@ -36,7 +37,13 @@ public class ReturnAndCancelService {
         }
 
         List<UpdateStockReqDto> updateStockReqDtos = orderItemRepository.findOrderItemDtosByOrderId(orderId);
-        productServiceClient.updateRedisStock(updateStockReqDtos, "INC");
+        productServiceClient.increaseDBStock(updateStockReqDtos);
+
+        // Redis 재고 복구
+        for (UpdateStockReqDto dto : updateStockReqDtos) {
+            stockCacheService.increaseStock(dto.getProductId(), dto.getCnt());
+            log.info("레디스에서 상품 {}의 재고 {}만큼 복구됨", dto.getProductId(), dto.getCnt());
+        }
 
         order.updateStatusToCanceled();
 

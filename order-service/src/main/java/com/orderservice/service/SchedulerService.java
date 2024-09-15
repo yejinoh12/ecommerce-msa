@@ -3,7 +3,7 @@ package com.orderservice.service;
 import com.common.dto.order.UpdateStockReqDto;
 import com.orderservice.client.ProductServiceClient;
 import com.orderservice.entity.Order;
-import com.orderservice.entity.statusEnum.OrderStatus;
+import com.orderservice.entity.OrderStatus;
 import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +28,7 @@ public class SchedulerService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductServiceClient productServiceClient;
+    private final StockCacheService stockCacheService;
 
     @Scheduled(cron = "0/24 * * * * ?") // 매 24초마다 실행
     @Transactional
@@ -60,7 +61,13 @@ public class SchedulerService {
 
         if (!orderIds.isEmpty()) {
             List<UpdateStockReqDto> updateStockReqDtos = orderItemRepository.findOrderItemDtosByOrderIds(orderIds);
-            productServiceClient.updateRedisStock(updateStockReqDtos,"INC");
+            productServiceClient.increaseDBStock(updateStockReqDtos);
+
+            // Redis 재고 복구
+            for (UpdateStockReqDto dto : updateStockReqDtos) {
+                stockCacheService.increaseStock(dto.getProductId(), dto.getCnt());
+                log.info("레디스에서 상품 {}의 재고 {}만큼 복구됨", dto.getProductId(), dto.getCnt());
+            }
         }
     }
 }

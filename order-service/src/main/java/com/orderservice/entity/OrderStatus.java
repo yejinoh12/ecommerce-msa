@@ -1,4 +1,4 @@
-package com.orderservice.entity.statusEnum;
+package com.orderservice.entity;
 
 public enum OrderStatus {
 

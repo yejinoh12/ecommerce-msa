@@ -1,4 +1,4 @@
-package com.orderservice.entity.statusEnum;
+package com.orderservice.entity;
 
 /**
  * 주문 완료 후 D+1에 배송중, D+2에 배송완료가 된다고 가정

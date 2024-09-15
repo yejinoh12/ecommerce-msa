@@ -1,14 +1,13 @@
 package com.productservice.service;
 
-import com.common.dto.product.CartResDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
-import com.productservice.domain.Cart;
-import com.productservice.domain.CartItem;
-import com.productservice.domain.Product;
-import com.productservice.dto.cart.CartAddDto;
-import com.productservice.dto.cart.CartDto;
-import com.productservice.dto.cart.CartItemDto;
+import com.productservice.entity.Cart;
+import com.productservice.entity.CartItem;
+import com.productservice.entity.Product;
+import com.productservice.dto.cart.CartAddReqDto;
+import com.productservice.dto.cart.CartResDto;
+import com.productservice.dto.cart.CartItemResDto;
 import com.productservice.repository.CartItemRepository;
 import com.productservice.repository.CartRepository;
 import com.productservice.repository.ProductRepository;
@@ -32,12 +31,12 @@ public class CartService {
     private final CartRepository cartRepository;
 
     // 장바구니 추가
-    public ApiResponse<?> addCartItem(CartAddDto cartAddDto, Long userId) {
+    public ApiResponse<?> addCartItem(CartAddReqDto cartAddReqDto, Long userId) {
 
-        Product product = findProduct(cartAddDto.getProductId());
+        Product product = findProduct(cartAddReqDto.getProductId());
 
         //재고 검증
-        if (!product.hasSufficientStock(cartAddDto.getCnt())) {
+        if (!product.hasEnoughStock(cartAddReqDto.getCnt())) {
             throw new BaseBizException("재고가 부족합니다. 현재 재고: " + product.getStock());
         }
 
@@ -53,7 +52,7 @@ public class CartService {
         CartItem cartItem = CartItem.builder()
                 .cart(cart)
                 .product(product)
-                .count(cartAddDto.getCnt())
+                .count(cartAddReqDto.getCnt())
                 .build();
 
         cartItemRepository.save(cartItem);
@@ -65,12 +64,11 @@ public class CartService {
 
         CartItem cartItem = getCartItem(cartItemId);
         Cart cart = getCart(userId);
-
         validateCartOwnership(cartItem, cart);
 
         //재고 검증
         Product product = cartItem.getProduct();
-        if (!product.hasSufficientStock(cartItem.getCount() + 1)){
+        if (product.hasEnoughStock(cartItem.getCount() + 1)){
             throw new BaseBizException("재고가 부족합니다. 현재 재고: " + product.getStock());
         }
 
@@ -81,7 +79,7 @@ public class CartService {
     }
 
     // 장바구니 수량 감소
-    public ApiResponse<CartDto> decreaseCartItem(Long cartItemId, Long userId) {
+    public ApiResponse<CartResDto> decreaseCartItem(Long cartItemId, Long userId) {
 
         CartItem cartItem = getCartItem(cartItemId);
         Cart cart = getCart(userId);
@@ -108,74 +106,72 @@ public class CartService {
 
     // 장바구니 조회
     @Transactional(readOnly = true)
-    public ApiResponse<CartDto> getMyCart(Long userId) {
+    public ApiResponse<CartResDto> getMyCart(Long userId) {
 
         Cart cart = getCart(userId);
 
-        List<CartItemDto> cartItemDtos = cartItemRepository.findByCartId(cart.getId()).stream()
-                .map(item -> CartItemDto.builder()
+        List<CartItemResDto> cartItemResDtos = cartItemRepository.findByCartId(cart.getId()).stream()
+                .map(item -> CartItemResDto.builder()
                         .c_item_id(item.getId())
                         .name(item.getProduct().getName())
-                        .price(item.getProduct().getPrice() * item.getCount()) // 단가 * 수량
-                        .cnt(item.getCount())
+                        .unitPrice(item.getProduct().getPrice())
+                        .quantity(item.getCount())
+                        .subTotal(item.getProduct().getPrice() * item.getCount())
                         .hasStock(item.getProduct().hasStock())
                         .isInSaleTime(item.getProduct().isSaleTimeActive(LocalDateTime.now()))
                         .build())
                 .collect(Collectors.toList());
 
         // 총 가격 계산
-        int totalPrice = cartItemDtos.stream()
-                .mapToInt(CartItemDto::getPrice)
+        int totalPrice = cartItemResDtos.stream()
+                .mapToInt(CartItemResDto::getSubTotal)
                 .sum();
 
         // 장바구니 DTO 생성
-        CartDto cartDto = CartDto.builder()
+        CartResDto cartResDto = CartResDto.builder()
                 .totalPrice(totalPrice) // 총 가격 설정
-                .items(cartItemDtos) // 아이템 리스트 설정
+                .items(cartItemResDtos) // 아이템 리스트 설정
                 .build();
 
-        return ApiResponse.ok(200, "장바구니 조회 성공", cartDto);
+        return ApiResponse.ok(200, "장바구니 조회 성공", cartResDto);
     }
 
-
     //주문 서비스에서 장바구니 조회
-    public List<CartResDto> getCartItemsForOrder(Long userId) {
+    public List<com.common.dto.product.CartResDto> getCartItemsForOrder(Long userId) {
 
-        log.info("order-service 장바구니 조회 요청, userId={}", userId);
+        log.info("주문 서비스 장바구니 조회 요청, userId={}", userId);
 
         Cart cart = getCart(userId);
 
-        List<CartResDto> cartResDtos = cartItemRepository.findByCartId(cart.getId())
+        return cartItemRepository.findByCartId(cart.getId())
                 .stream()
-                .map(item -> CartResDto.builder()
+                .map(item -> com.common.dto.product.CartResDto.builder()
                         .productId(item.getProduct().getId())
                         .unitPrice(item.getProduct().getPrice())
                         .cnt(item.getCount())
                         .build())
                 .collect(Collectors.toList());
-
-        log.info("order-service 장바구니 조회 완료");
-
-        return cartResDtos;
     }
 
-
-    //검증 메서드
+    //상품 조회
     private Product findProduct(Long productId) {
         return productRepository.findById(productId)
                 .orElseThrow(() -> new BaseBizException("productID가 " + productId + "인 상품 옵션을 찾을 수 없습니다."));
     }
 
+    //장바구니 반환, 없다면 생성 후 반환
     private Cart getOrCreateCart(Long userId) {
         return cartRepository.findByUserId(userId)
                 .orElseGet(() -> cartRepository.save(Cart.createCart(userId)));
     }
 
+    //장바구니 조회
     private Cart getCart(Long userId) {
         return cartRepository.findByUserId(userId)
                 .orElseThrow(() -> new BaseBizException("장바구니가 비었습니다. userID:  " + userId));
     }
 
+    //장바구니 아이템 조회
     private CartItem getCartItem(Long cartItemId) {
         return cartItemRepository.findById(cartItemId)
                 .orElseThrow(() -> new BaseBizException("cartItemID가 " + cartItemId + "인 장바구니 아이템을 찾을 수 없습니다."));

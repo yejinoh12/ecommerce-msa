@@ -4,11 +4,12 @@ import lombok.*;
 
 @Data
 @Builder
-public class CartItemDto {
+public class CartItemResDto {
     private Long c_item_id;
     private String name;
-    private int price;
-    private int cnt;
+    private int unitPrice;
+    private int quantity;
+    private int subTotal;
     private boolean hasStock;
     private boolean isInSaleTime;
 }

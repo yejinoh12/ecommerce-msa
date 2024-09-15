@@ -1,11 +1,7 @@
 package com.productservice.controller;
 
-import com.common.dto.order.PurchaseAvailReqDto;
-import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.product.ProductInfoDto;
-import com.productservice.redis.RedissonLock;
 import com.productservice.service.ProductService;
-import com.productservice.service.StockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -21,8 +17,6 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
-    private final StockService stockService;
-    private final RedissonLock redissonLock;
 
     //모든 상품 목록 조회
     @GetMapping
@@ -38,20 +32,14 @@ public class ProductController {
 
     //상품 상세 조회
     @GetMapping("/{productId}")
-    public ResponseEntity<?> getProductDetailsWithOption( @PathVariable("productId") Long productId){
-        return ResponseEntity.status(HttpStatus.OK).body(productService.getProductDetailsWithOption(productId));
+    public ResponseEntity<?> getProductDetails( @PathVariable("productId") Long productId){
+        return ResponseEntity.status(HttpStatus.OK).body(productService.getProductDetails(productId));
     }
 
-    //상품 정보
+    //주문 서비스에서 상품 정보 요청
     @GetMapping("/info/{productId}")
     public List<ProductInfoDto> getProductInfos(@PathVariable("productId") List<Long> productIds) {
         return productService.getProductInfos(productIds);
     }
 
-    //구매 가증 여부 검증
-    @PostMapping("/avail")
-    public ResponseEntity<Void> validateProductStockAndEventTimes(@RequestBody List<PurchaseAvailReqDto> purchaseAvailReqDtos) {
-        productService.checkPurchaseAvailability(purchaseAvailReqDtos);
-        return ResponseEntity.ok().build();
-    }
 }

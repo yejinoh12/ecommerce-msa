@@ -1,6 +1,7 @@
 package com.productservice.controller;
 
 import com.common.dto.order.UpdateStockReqDto;
+import com.common.dto.product.StockResDto;
 import com.productservice.service.StockService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,34 +19,20 @@ public class StockController {
 
     //상품 재고 조회
     @GetMapping("/stock/{productId}")
-    public ResponseEntity<?> getProductStock(@PathVariable("productId") Long productId){
-        return ResponseEntity.status(HttpStatus.OK).body(stockService.getProductStock(productId));
-    }
-
-    // Redis 재고 감소
-    @PostMapping("/redis/stock/dec")
-    public ResponseEntity<Void> decreaseRedisStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
-        stockService.decreaseRedisStock(updateStockReqDtos);
-        return ResponseEntity.ok().build();
-    }
-
-    // Redis 재고 증가
-    @PostMapping("/redis/stock/inc")
-    public ResponseEntity<Void> increaseRedisStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
-        stockService.increaseRedisStock(updateStockReqDtos);
-        return ResponseEntity.ok().build();
+    public StockResDto getProductStock(@PathVariable("productId") Long productId){
+        return stockService.getProductStock(productId);
     }
 
     // DB 재고 감소
-    @PostMapping("/db/stock/dec")
-    public ResponseEntity<Void> decreaseDBStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
+    @PostMapping("/stock/decrease")
+    public ResponseEntity<Void> decreaseStocks(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
         stockService.decreaseDBStock(updateStockReqDtos);
         return ResponseEntity.ok().build();
     }
 
     // DB 재고 증가
-    @PostMapping("/db/stock/inc")
-    public ResponseEntity<Void> increaseDBStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
+    @PostMapping("/stock/increase")
+    public ResponseEntity<Void> increaseStocks(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
         stockService.increaseDBStock(updateStockReqDtos);
         return ResponseEntity.ok().build();
     }

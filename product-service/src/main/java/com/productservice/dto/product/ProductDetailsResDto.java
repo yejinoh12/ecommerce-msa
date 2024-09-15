@@ -1,13 +1,13 @@
 package com.productservice.dto.product;
 
-import com.productservice.domain.Product;
+import com.productservice.entity.Product;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class ProductDetailDto {
+public class ProductDetailsResDto {
 
     private Long p_id;
     private String name;
@@ -18,8 +18,8 @@ public class ProductDetailDto {
     private boolean hasStock;
     private boolean isInSaleTime;
 
-    public static ProductDetailDto from(Product product) {
-        return ProductDetailDto.builder()
+    public static ProductDetailsResDto from(Product product) {
+        return ProductDetailsResDto.builder()
                 .p_id(product.getId())
                 .description(product.getDescription())
                 .name(product.getName())
@@ -27,7 +27,7 @@ public class ProductDetailDto {
                 .stock(product.getStock())
                 .startFrom(product.getStartTime())
                 .hasStock(product.hasStock())
-                .isInSaleTime(product.isAvailable(LocalDateTime.now()))
+                .isInSaleTime(product.isSaleTimeActive(LocalDateTime.now()))
                 .build();
     }
 }

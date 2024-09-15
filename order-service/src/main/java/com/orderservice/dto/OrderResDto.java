@@ -1,11 +1,9 @@
 package com.orderservice.dto;
 
-import com.esotericsoftware.kryo.util.Null;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.orderservice.entity.Order;
-import com.orderservice.entity.statusEnum.DeliveryStatus;
-import com.orderservice.entity.statusEnum.OrderStatus;
+import com.orderservice.entity.DeliveryStatus;
+import com.orderservice.entity.OrderStatus;
 import lombok.Builder;
 import lombok.Data;
 

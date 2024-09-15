@@ -1,4 +1,4 @@
-package com.productservice.domain;
+package com.productservice.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -24,7 +24,6 @@ public class CartItem {
 
     @Column(nullable = false)
     private int count;
-
 
     @Builder
     public CartItem(Cart cart, Product product, int count) {
