@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 @Builder
 @AllArgsConstructor
-public class PurchaseAvailReqDto {
+public class AvailCheckReqDto {
 
     private Long productId;
     private int count;

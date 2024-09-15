@@ -25,15 +25,15 @@ public class StockController {
 
     // DB 재고 감소
     @PostMapping("/stock/decrease")
-    public ResponseEntity<Void> decreaseStocks(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
-        stockService.decreaseDBStock(updateStockReqDtos);
+    public ResponseEntity<Void> decreaseStocks(@RequestBody UpdateStockReqDto updateStockReqDto) {
+        stockService.decreaseDBStock(updateStockReqDto);
         return ResponseEntity.ok().build();
     }
 
     // DB 재고 증가
     @PostMapping("/stock/increase")
-    public ResponseEntity<Void> increaseStocks(@RequestBody List<UpdateStockReqDto> updateStockReqDtos) {
-        stockService.increaseDBStock(updateStockReqDtos);
+    public ResponseEntity<Void> increaseStocks(@RequestBody UpdateStockReqDto updateStockReqDto) {
+        stockService.increaseDBStock(updateStockReqDto);
         return ResponseEntity.ok().build();
     }
 }

@@ -23,7 +23,7 @@ import java.util.List;
 @Transactional
 public class CancelService {
 
-    private final StockCacheService stockCacheService;
+    private final RedisStockService redisStockService;
     private final ProductServiceClient productServiceClient;
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
@@ -36,15 +36,17 @@ public class CancelService {
             throw new BaseBizException("취소가 불가능 합니다.");
         }
 
+        //재고 복구 상품 리스트
         List<UpdateStockReqDto> updateStockReqDtos = orderItemRepository.findOrderItemDtosByOrderId(orderId);
-        productServiceClient.increaseDBStock(updateStockReqDtos);
 
-        // Redis 재고 복구
+        //레디스 및 DB 재고 복구
         for (UpdateStockReqDto dto : updateStockReqDtos) {
-            stockCacheService.increaseStock(dto.getProductId(), dto.getCnt());
-            log.info("레디스에서 상품 {}의 재고 {}만큼 복구됨", dto.getProductId(), dto.getCnt());
+            redisStockService.increaseStock(dto.getProductId(), dto.getCnt());
+            productServiceClient.increaseDBStock(dto);
+            log.info("상품 {}의 재고 {}만큼 복구", dto.getProductId(), dto.getCnt());
         }
 
+        //상태 변경
         order.updateStatusToCanceled();
 
         return ApiResponse.ok(200, "주문 취소 성공", null);
@@ -67,11 +69,13 @@ public class CancelService {
             throw new BaseBizException("반품 기한이 지났습니다.");
         }
 
-        order.updateStatusToReturning(); // 상태 변경
+        // 상태 변경
+        order.updateStatusToReturning();
 
         return ApiResponse.ok(200, "반품 신청 성공", null);
     }
 
+    //주문 조회
     private Order findOrderById(Long orderId) {
         return orderRepository.findById(orderId)
                 .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));

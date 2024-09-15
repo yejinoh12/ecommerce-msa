@@ -26,48 +26,28 @@ public class StockService {
         return new StockResDto(product.getId(), product.getStock());
     }
 
-    //여러 상품에 대한 재고 감소
+    //재고 감소
     @Transactional
-    public void decreaseDBStock(List<UpdateStockReqDto> updateStockReqDtos) {
+    public void decreaseDBStock(UpdateStockReqDto updateStockReqDto) {
 
-        for (UpdateStockReqDto dto : updateStockReqDtos) {
+        Long productId = updateStockReqDto.getProductId();
+        int quantity = updateStockReqDto.getCnt();
+        log.info("재고 감소: productId = {}, quantity={}", productId, quantity);
 
-            Product product = productRepository.findByIdWithPessimisticLock(dto.getProductId())
-                    .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + dto.getProductId()));
-
-            product.decreaseStock(dto.getCnt());
-            productRepository.saveAndFlush(product);
-        }
-    }
-
-    //여러 상품에 대한 재고 증가
-    @Transactional
-    public void increaseDBStock(List<UpdateStockReqDto> updateStockReqDtos) {
-
-        for (UpdateStockReqDto dto : updateStockReqDtos) {
-
-            Product product = productRepository.findById(dto.getProductId())
-                    .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + dto.getProductId()));
-
-            product.increaseStock(dto.getCnt());
-            productRepository.saveAndFlush(product);
-        }
-    }
-
-    //단일 상품에 대한 재고 감소
-    @Transactional
-    public void decrease(Long productId, int quantity) {
-        log.info("db 재고 감소, productId = {}", productId);
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdWithPessimisticLock(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + productId));
         product.decreaseStock(quantity);
         productRepository.saveAndFlush(product);
     }
 
-    //단일 상품에 대한 재고 증가
+    //재고 증가
     @Transactional
-    public void increase(Long productId, int quantity) {
-        log.info("db 재고 증가, productId = {}", productId);
+    public void increaseDBStock(UpdateStockReqDto updateStockReqDto) {
+
+        Long productId = updateStockReqDto.getProductId();
+        int quantity = updateStockReqDto.getCnt();
+        log.info("재고 증가:  productId = {}, quantity={}", productId, quantity);
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + productId));
         product.increaseStock(quantity);

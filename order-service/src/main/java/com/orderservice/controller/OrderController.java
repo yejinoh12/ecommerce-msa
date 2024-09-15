@@ -1,7 +1,7 @@
 package com.orderservice.controller;
 
 import com.common.utils.ParseRequestUtil;
-import com.orderservice.dto.OrderReqDto;
+import com.orderservice.dto.order.OrderReqDto;
 import com.orderservice.service.CancelService;
 import com.orderservice.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,25 +23,31 @@ public class OrderController {
     private final CancelService cancelService;
     private final ParseRequestUtil parseRequestUtil;
 
-    // 장바구니 조회 및 주문 전 확인
+    // 바로 구매 전 정보 조회
+    @PostMapping("/direct/preview")
+    public ResponseEntity<?> directOrderPreview(@RequestBody OrderReqDto orderReqDto, HttpServletRequest request) {
+        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
+        return ResponseEntity.ok(orderService.directPurchasePreview(orderReqDto, userId));
+    }
+
+    // 바로 구매
+    @PostMapping("/direct/process")
+    public ResponseEntity<?> directOrder(@RequestBody OrderReqDto orderReqDto, HttpServletRequest request) {
+        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
+        return ResponseEntity.ok(orderService.directOrder(orderReqDto, userId));
+    }
+
+    // 장바구니 상품 구매 전 정보 조회
     @GetMapping("/preview")
     public ResponseEntity<?> getCartItems(HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
         return ResponseEntity.ok(orderService.getOrderItemsFromCart(userId));
     }
 
-    // 주문 생성
+    // 장바구니 상품 구매
     @PostMapping("/process")
     public ResponseEntity<?> order(@RequestBody List<OrderReqDto> orderReqDtos, HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.orderFromCart(orderReqDtos, userId));
-    }
-
-    // 주문 생성 테스트용 엔드포인트
-    @PostMapping("/process/test")
-    public ResponseEntity<?> orderTest(@RequestBody List<OrderReqDto> orderReqDtos) {
-        Random random = new Random();
-        Long userId = (long) (random.nextInt(1000) + 1);
         return ResponseEntity.ok(orderService.orderFromCart(orderReqDtos, userId));
     }
 
@@ -69,6 +75,14 @@ public class OrderController {
     @GetMapping("/return/{orderId}")
     public ResponseEntity<?> returnOrder(@PathVariable("orderId") Long orderId) {
         return ResponseEntity.ok(cancelService.returnOrder(orderId));
+    }
+
+    //바로 주문 테스트용 엔드포인트
+    @PostMapping("/process/test")
+    public ResponseEntity<?> orderTest(@RequestBody List<OrderReqDto> orderReqDtos) {
+        Random random = new Random();
+        Long userId = (long) (random.nextInt(1000) + 1);
+        return ResponseEntity.ok(orderService.orderFromCart(orderReqDtos, userId));
     }
 
 }

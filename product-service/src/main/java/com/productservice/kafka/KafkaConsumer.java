@@ -23,17 +23,32 @@ public class KafkaConsumer {
     private final StockService stockService;
     private final ObjectMapper objectMapper;
 
-    @KafkaListener(topics = "stock-topic", groupId = "product-group")
-    public void listenStockUpdateRequest(String payload) {
+    @KafkaListener(topics = "stock-decrease-topic", groupId = "product-group")
+    public void listenStockDecreaseRequest(String payload) {
+
         try {
-            List<UpdateStockReqDto> updateStockReqDtos =
-                    objectMapper.readValue(payload, new TypeReference<List<UpdateStockReqDto>>() {});
+            UpdateStockReqDto updateStockReqDtos = objectMapper.readValue(payload, UpdateStockReqDto.class);
             stockService.decreaseDBStock(updateStockReqDtos);
         } catch (JsonProcessingException e) {
             log.error("재고 업데이트 요청 처리 중 오류 발생", e);
             throw new RuntimeException("재고 업데이트 메시지 처리 실패", e);
         } catch (Exception e) {
             log.error("재고 감소 중 오류 발생", e);
+            throw new RuntimeException("재고 업데이트 실패", e);
+        }
+    }
+
+    @KafkaListener(topics = "stock-increase-topic", groupId = "product-group")
+    public void listenStockIncreaseRequest(String payload) {
+
+        try {
+            UpdateStockReqDto updateStockReqDtos = objectMapper.readValue(payload, UpdateStockReqDto.class);
+            stockService.increaseDBStock(updateStockReqDtos);
+        } catch (JsonProcessingException e) {
+            log.error("재고 업데이트 요청 처리 중 오류 발생", e);
+            throw new RuntimeException("재고 업데이트 메시지 처리 실패", e);
+        } catch (Exception e) {
+            log.error("재고 증가 중 오류 발생", e);
             throw new RuntimeException("재고 업데이트 실패", e);
         }
     }

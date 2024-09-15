@@ -1,6 +1,5 @@
-package com.orderservice.dto;
+package com.orderservice.dto.order;
 
-import com.common.dto.product.ProductInfoDto;
 import com.orderservice.entity.OrderItem;
 import lombok.Builder;
 import lombok.Data;
@@ -10,13 +9,13 @@ import lombok.Data;
 public class OrderItemDto {
 
     private String name;
-    private int cnt;
+    private int quantity;
     private int price;
 
-    public static OrderItemDto from(ProductInfoDto productInfoDto, OrderItem orderItem) {
+    public static OrderItemDto from(OrderItem orderItem) {
         return OrderItemDto.builder()
-                .name(productInfoDto.getName())
-                .cnt(orderItem.getQuantity())
+                .name(orderItem.getProductName())
+                .quantity(orderItem.getQuantity())
                 .price(orderItem.getUnitPrice() * orderItem.getQuantity())
                 .build();
     }

@@ -1,5 +1,7 @@
 package com.productservice.service;
 
+import com.common.dto.order.AvailCheckReqDto;
+import com.common.dto.order.AvailCheckResDto;
 import com.common.dto.product.ProductInfoDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
@@ -73,5 +75,27 @@ public class ProductService {
                         .name(product.getName())
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    //상품 구매 가능 여부 확인
+    public AvailCheckResDto validatePurchase(AvailCheckReqDto availCheckReqDto) {
+        Long productId = availCheckReqDto.getProductId();
+        int quantity = availCheckReqDto.getCount();
+
+        // 상품 조회
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BaseBizException("상품을 찾을 수 없습니다. ID: " + productId));
+
+        // 현재 시간 가져오기
+        LocalDateTime currentTime = LocalDateTime.now();
+
+        // 판매 가능 여부와 재고 여부 체크
+        boolean hasStock = product.hasEnoughStock(quantity);
+        boolean isInSalePeriod = product.isSaleTimeActive(currentTime);
+
+        return AvailCheckResDto.builder()
+                .hasStock(hasStock)
+                .isInSalePeriod(isInSalePeriod)
+                .build();
     }
 }

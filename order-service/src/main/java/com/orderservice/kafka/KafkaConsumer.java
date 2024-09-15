@@ -10,9 +10,10 @@ import com.orderservice.entity.OrderItem;
 import com.orderservice.entity.OrderStatus;
 import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
-import com.orderservice.service.StockCacheService;
+import com.orderservice.service.RedisStockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.antlr.v4.runtime.atn.SemanticContext;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +27,7 @@ public class KafkaConsumer {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final KafkaProducer kafkaProducer;
-    private final StockCacheService stockCacheService;
+    private final RedisStockService redisStockService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @KafkaListener(topics = "payment-response-topic", groupId = "order-group")
@@ -45,13 +46,15 @@ public class KafkaConsumer {
             //상태 변경
             order.setOrderStatus(OrderStatus.ORDERED);
 
-            //DB 재고 감소 요청
             List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
-            List<UpdateStockReqDto> updateStockReqDtos = orderItems.stream()
-                    .map(orderItem -> new UpdateStockReqDto(orderItem.getProductId(), orderItem.getQuantity()))
-                    .toList();
 
-            kafkaProducer.sendStockUpdateRequest(updateStockReqDtos);
+            //DB 재고 감소 요청
+            for(OrderItem orderItem : orderItems){
+                Long productId = orderItem.getProductId();
+                int quantity = orderItem.getQuantity();
+                UpdateStockReqDto updateStockReqDtos = new UpdateStockReqDto(productId, quantity);
+                kafkaProducer.sendStockDecreaseRequest(updateStockReqDtos);
+            }
 
         } else {
 
@@ -61,12 +64,10 @@ public class KafkaConsumer {
             //레디스 재고 복구
             List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
             for (OrderItem orderItem : orderItems) {
-                log.info("상품 {}의 재고를 복구합니다. 복구 수량: {}", orderItem.getProductId(), orderItem.getQuantity());
-                stockCacheService.increaseStock(orderItem.getProductId(), orderItem.getQuantity());
+                redisStockService.increaseStock(orderItem.getProductId(), orderItem.getQuantity());
             }
         }
 
         orderRepository.save(order);
-        log.info("주문 상태 변경 orderId={}, orderStatus={}", orderId, order.getOrderStatus());
     }
 }

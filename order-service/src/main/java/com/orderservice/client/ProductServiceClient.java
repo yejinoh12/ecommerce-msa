@@ -1,6 +1,7 @@
 package com.orderservice.client;
 
-import com.common.dto.order.PurchaseAvailReqDto;
+import com.common.dto.order.AvailCheckReqDto;
+import com.common.dto.order.AvailCheckResDto;
 import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.product.CartResDto;
 import com.common.dto.product.ProductInfoDto;
@@ -27,13 +28,16 @@ public interface ProductServiceClient {
 
     //DB 재고 감소
     @PostMapping("/product/stock/decrese")
-    void decreaseDBStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos);
+    void decreaseDBStock(@RequestBody UpdateStockReqDto updateStockReqDto);
 
     //DB 재고 증가
     @PostMapping("/product/stock/increase")
-    void increaseDBStock(@RequestBody List<UpdateStockReqDto> updateStockReqDtos);
+    void increaseDBStock(@RequestBody UpdateStockReqDto updateStockReqDto);
 
     //재고 정보 조회
     @GetMapping("/product/stock/{productId}")
     StockResDto getProductStock(@PathVariable("productId") Long productId);
+
+    @PostMapping("/product/purchase/validate")
+    AvailCheckResDto checkPurchaseAvailability(@RequestBody AvailCheckReqDto availCheckReqDto);
 }

@@ -96,9 +96,8 @@ public class UserService {
 
         return builder()
                 .name(aesUtil.decrypt(user.getName()))
-                .email(aesUtil.decrypt(user.getEmail()))
-                .phoneNumber(aesUtil.decrypt(user.getPhoneNumber()))
                 .address(aesUtil.decrypt(user.getAddress()))
+                .phoneNumber(aesUtil.decrypt(user.getPhoneNumber()))
                 .build();
     }
 }

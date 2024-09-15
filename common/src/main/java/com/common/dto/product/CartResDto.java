@@ -7,6 +7,7 @@ import lombok.Data;
 @Builder
 public class CartResDto {
     private Long productId;
+    private String name;
     private int unitPrice;
     private int cnt;
 }

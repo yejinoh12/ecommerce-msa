@@ -39,10 +39,8 @@ public class Order extends BaseEntity {
         return new Order(userId, totalPrice, OrderStatus.PAYMENT_IN_PROGRESS, DeliveryStatus.PENDING);
     }
 
-    /**********************************************************
-     * 상태 변경 메서드
-     **********************************************************/
 
+    //상태 변경 메서드들
     public void updateStatusToCanceled() {
         this.orderStatus = OrderStatus.CANCELED;
         this.deliveryStatus = DeliveryStatus.CANCELED;

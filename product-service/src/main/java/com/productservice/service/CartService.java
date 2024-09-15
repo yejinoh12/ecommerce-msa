@@ -147,6 +147,7 @@ public class CartService {
                 .stream()
                 .map(item -> com.common.dto.product.CartResDto.builder()
                         .productId(item.getProduct().getId())
+                        .name(item.getProduct().getName())
                         .unitPrice(item.getProduct().getPrice())
                         .cnt(item.getCount())
                         .build())

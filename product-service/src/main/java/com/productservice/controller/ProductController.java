@@ -1,5 +1,7 @@
 package com.productservice.controller;
 
+import com.common.dto.order.AvailCheckReqDto;
+import com.common.dto.order.AvailCheckResDto;
 import com.common.dto.product.ProductInfoDto;
 import com.productservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,12 @@ public class ProductController {
     @GetMapping("/info/{productId}")
     public List<ProductInfoDto> getProductInfos(@PathVariable("productId") List<Long> productIds) {
         return productService.getProductInfos(productIds);
+    }
+
+    //상품 구매 가능 여부 확인
+    @PostMapping("/purchase/validate")
+    public AvailCheckResDto checkPurchaseAvailability(@RequestBody AvailCheckReqDto availCheckReqDto){
+        return productService.validatePurchase(availCheckReqDto);
     }
 
 }

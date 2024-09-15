@@ -1,6 +1,8 @@
-package com.orderservice.dto;
+package com.orderservice.dto.orderHistory;
 
 import com.common.dto.user.UserInfoDto;
+import com.orderservice.dto.order.OrderItemDto;
+import com.orderservice.dto.order.OrderResDto;
 import lombok.*;
 
 import java.util.List;
@@ -14,7 +16,7 @@ import java.util.List;
 @Data
 @Builder
 public class OrderDetailsDto {
-    private OrderResDto oder_info;
-    private UserInfoDto user_info;
-    private List<OrderItemDto> order_items; // 장바구니 아이템 목록
+    private OrderResDto orderInfo;
+    private UserInfoDto userInfo;
+    private List<OrderItemDto> items;
 }

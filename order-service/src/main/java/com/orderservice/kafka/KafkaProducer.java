@@ -21,8 +21,13 @@ public class KafkaProducer {
         kafkaTemplate.send("payment-request-topic", paymentReqDto);
     }
 
-    public void sendStockUpdateRequest(List<UpdateStockReqDto> updateStockReqDtos) {
-        log.info("Kafka 재고 감소 요청");
-        kafkaTemplate.send("stock-topic", updateStockReqDtos);
+    public void sendStockDecreaseRequest(UpdateStockReqDto updateStockReqDtos) {
+        log.info("Kafka : 재고 감소 요청");
+        kafkaTemplate.send("stock-decrease-topic", updateStockReqDtos);
+    }
+
+    public void sendStockIncreaseRequest(UpdateStockReqDto updateStockReqDtos) {
+        log.info("Kafka : 재고 복구 요청");
+        kafkaTemplate.send("stock-increase-topic", updateStockReqDtos);
     }
 }

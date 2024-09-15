@@ -21,19 +21,24 @@ public class OrderItem {
     private Long productId;
 
     @Column(nullable = false)
+    private String productName;
+
+    @Column(nullable = false)
     private int unitPrice;
 
     @Column(nullable = false)
     private int quantity;
 
-    private OrderItem(Order order, Long productId, int unitPrice, int quantity) {
+    private OrderItem(Order order, Long productId, String productName, int unitPrice, int quantity) {
         this.order = order;
         this.productId = productId;
+        this.productName = productName;
         this.unitPrice = unitPrice;
         this.quantity = quantity;
     }
 
-    public static OrderItem createOrderItem(Order order, Long productId, int unitPrice, int quantity) {
-        return new OrderItem(order, productId, unitPrice, quantity);
+    public static OrderItem createOrderItem
+            (Order order, Long productId, String productName, int unitPrice, int quantity) {
+        return new OrderItem(order, productId, productName, unitPrice, quantity);
     }
 }
