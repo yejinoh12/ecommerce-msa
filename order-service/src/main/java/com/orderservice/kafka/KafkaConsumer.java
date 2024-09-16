@@ -13,7 +13,6 @@ import com.orderservice.repository.OrderRepository;
 import com.orderservice.service.RedisStockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.antlr.v4.runtime.atn.SemanticContext;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 

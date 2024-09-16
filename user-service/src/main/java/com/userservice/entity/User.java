@@ -6,6 +6,8 @@ import lombok.*;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class User extends BaseEntity {
 
@@ -17,29 +19,19 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String name;
 
-    @Column (unique = true, nullable = false)
+    @Column(unique = true, nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
     @Column(nullable = false)
-    private String phoneNumber;
+    private String phone;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     private String address;
 
-    @Column (nullable = false)
+    @Column(nullable = false)
     @Enumerated(value = EnumType.STRING)
     private UserRoleEnum role;
-
-    @Builder
-    public User(String name, String email, String password, String phoneNumber, String address, UserRoleEnum role) {
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.phoneNumber = phoneNumber;
-        this.address = address;
-        this.role = role;
-    }
 }

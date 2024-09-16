@@ -7,9 +7,9 @@ import com.userservice.entity.User;
 import com.userservice.entity.UserRoleEnum;
 import com.userservice.dto.SignUpReqDto;
 import com.userservice.dto.UserResDto;
+import com.userservice.repository.AddressRepository;
 import com.userservice.repository.UserRepository;
 import com.userservice.service.email.EmailRedisService;
-import com.userservice.service.email.EmailService;
 import com.userservice.util.AesUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,18 +18,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import static com.common.dto.user.UserInfoDto.*;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final AesUtil aesUtil;
-    private final EmailRedisService emailRedisService;
+    private final PasswordEncoder passwordEncoder;
 
+    private final UserRepository userRepository;
+    private final AddressRepository addressRepository;
+
+    private final EmailRedisService emailRedisService;
 
     //회원가입
     @Transactional
@@ -45,7 +45,7 @@ public class UserService {
 
         //이메일 인증 여부 확인
         String status = emailRedisService.getAuthenticationStatus(signUpReqDto.getEmail());
-        if(status == null || !status.equals("Y")){
+        if (status == null || !status.equals("Y")) {
             throw new BaseBizException("이메일 인증 후 시도해 주세요.");
         }
 
@@ -55,28 +55,29 @@ public class UserService {
                 .password(passwordEncoder.encode(signUpReqDto.getPassword()))
                 .address(aesUtil.encrypt(signUpReqDto.getAddress()))
                 .email(aesUtil.encrypt(signUpReqDto.getEmail()))
-                .phoneNumber(aesUtil.encrypt(signUpReqDto.getPhoneNumber()))
+                .phone(aesUtil.encrypt(signUpReqDto.getPhoneNumber()))
                 .role(UserRoleEnum.USER)
                 .build();
 
+        //유저 저장
         userRepository.save(user);
+
+        //이메일 인증 정보 삭제
         emailRedisService.deleteEmailInfo(signUpReqDto.getEmail());
 
         return ApiResponse.ok(201, "회원 가입 성공", null);
     }
 
     //회원 조회
-    public ApiResponse<UserResDto> myPage(Long userId) {
+    public ApiResponse<UserResDto> getUserProfile(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 사용자를 찾을 수 없습니다."));
 
-        log.info(user.getPhoneNumber());
-
         UserResDto userResDto = UserResDto.builder()
                 .name(aesUtil.decrypt(user.getName()))
                 .email(aesUtil.decrypt(user.getEmail()))
-                .phoneNumber(aesUtil.decrypt(user.getPhoneNumber()))
+                .phoneNumber(aesUtil.decrypt(user.getPhone()))
                 .address(aesUtil.decrypt(user.getAddress()))
                 .createdAt(user.getCreatedAt())
                 .modifiedAt(user.getModifiedAt())
@@ -85,19 +86,16 @@ public class UserService {
         return ApiResponse.ok(200, "회원 조회 성공", userResDto);
     }
 
-
     //주문 서비스 유저 정보 조회
     public UserInfoDto getUserInfo(Long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BaseBizException("userID가 " + userId + "인 사용자를 찾을 수 없습니다."));
 
-        log.info(user.getPhoneNumber());
-
-        return builder()
+        return UserInfoDto.builder()
                 .name(aesUtil.decrypt(user.getName()))
-                .address(aesUtil.decrypt(user.getAddress()))
-                .phoneNumber(aesUtil.decrypt(user.getPhoneNumber()))
+                .email(aesUtil.decrypt(user.getEmail()))
+                .phone(aesUtil.decrypt(user.getPhone()))
                 .build();
     }
 }

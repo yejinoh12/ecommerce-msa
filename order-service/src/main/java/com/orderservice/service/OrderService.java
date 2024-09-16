@@ -59,7 +59,11 @@ public class OrderService {
             throw new BaseBizException("판매 시간이 아닙니다.");
         }
 
-        //수령인 정보와 사용자 배송지 정보 추가
+        //주문 고객 정보
+        UserInfoDto userInfoDto = userServiceClient.getUserInfo(userId);
+
+        //배송지 정보
+
 
         //DTO 생성
         DirectOrderPreviewDto responseDto = DirectOrderPreviewDto.builder()
