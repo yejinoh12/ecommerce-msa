@@ -60,7 +60,7 @@ public class RedisStockService {
 
             log.warn("Lock 획득 성공: productId={}", productId);
 
-            //재고 감소 로직
+            //재고 감소
             String key = STOCK_CACHE_KEY_PREFIX + productId;
             int currentStock = getProductStock(productId);
 

@@ -32,12 +32,12 @@ public class StockService {
 
         Long productId = updateStockReqDto.getProductId();
         int quantity = updateStockReqDto.getCnt();
-        log.info("재고 감소: productId = {}, quantity={}", productId, quantity);
 
-        Product product = productRepository.findByIdWithPessimisticLock(productId)
+        Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + productId));
+
         product.decreaseStock(quantity);
-        productRepository.saveAndFlush(product);
+        productRepository.save(product);
     }
 
     //재고 증가
@@ -46,12 +46,11 @@ public class StockService {
 
         Long productId = updateStockReqDto.getProductId();
         int quantity = updateStockReqDto.getCnt();
-        log.info("재고 증가:  productId = {}, quantity={}", productId, quantity);
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + productId));
         product.increaseStock(quantity);
-        productRepository.saveAndFlush(product);
+        productRepository.save(product);
     }
 }
 

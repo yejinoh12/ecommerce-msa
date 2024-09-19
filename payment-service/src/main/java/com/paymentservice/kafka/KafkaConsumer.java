@@ -19,8 +19,10 @@ public class KafkaConsumer {
 
     @KafkaListener(topics = "payment-request-topic", groupId = "payment-group")
     public void listenPaymentRequest(String payload) throws JsonProcessingException {
-        PaymentReqDto paymentReqDto = objectMapper.readValue(payload, PaymentReqDto.class);
+
         log.info("Received payment request: {}", payload);
+
+        PaymentReqDto paymentReqDto = objectMapper.readValue(payload, PaymentReqDto.class);
         paymentService.processPayment(paymentReqDto);
     }
 }

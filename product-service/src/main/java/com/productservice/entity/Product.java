@@ -30,6 +30,10 @@ public class Product extends BaseEntity {
     @Column(nullable = false)
     private int stock;
 
+    @Setter
+    @Column(nullable = false)
+    private int likeCount;
+
     //상품 구매 가능 시간
     private LocalDateTime startTime;
 
@@ -56,7 +60,7 @@ public class Product extends BaseEntity {
     //재고 감소
     public void decreaseStock(int quantity) {
 
-        if (!isAvailable(LocalDateTime.now())) {
+        if (!isSaleTimeActive(LocalDateTime.now())) {
             throw new BaseBizException("구매 가능 시간이 아닙니다.");
         }
 

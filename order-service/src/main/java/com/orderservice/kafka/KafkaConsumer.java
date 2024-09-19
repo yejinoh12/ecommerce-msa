@@ -4,7 +4,9 @@ import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.payment.PaymentResDto;
 import com.common.exception.BaseBizException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orderservice.dto.order.OrderItemDto;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
 import com.orderservice.entity.OrderStatus;
@@ -24,49 +26,44 @@ import java.util.List;
 public class KafkaConsumer {
 
     private final OrderRepository orderRepository;
-    private final OrderItemRepository orderItemRepository;
-    private final KafkaProducer kafkaProducer;
     private final RedisStockService redisStockService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @KafkaListener(topics = "payment-response-topic", groupId = "order-group")
     public void handlePaymentResponse(String payload) throws JsonProcessingException {
 
+        //메시지 역직렬화
         PaymentResDto paymentResDto = objectMapper.readValue(payload, PaymentResDto.class);
         log.info("payment-response-topic 수신, orderId={}", paymentResDto.getOrderId());
 
+        //주문 조회
         Long orderId = paymentResDto.getOrderId();
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));
 
-        //주문 상태 변경
+        //주문 상태만 변경
         if (paymentResDto.isSuccess()) {
-
-            //상태 변경
             order.setOrderStatus(OrderStatus.ORDERED);
-
-            List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
-
-            //DB 재고 감소 요청
-            for(OrderItem orderItem : orderItems){
-                Long productId = orderItem.getProductId();
-                int quantity = orderItem.getQuantity();
-                UpdateStockReqDto updateStockReqDtos = new UpdateStockReqDto(productId, quantity);
-                kafkaProducer.sendStockDecreaseRequest(updateStockReqDtos);
-            }
-
         } else {
-
-            //상태 변경
             order.setOrderStatus(OrderStatus.PAYMENT_FAILED);
-
-            //레디스 재고 복구
-            List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
-            for (OrderItem orderItem : orderItems) {
-                redisStockService.increaseStock(orderItem.getProductId(), orderItem.getQuantity());
-            }
         }
 
+        //저장
         orderRepository.save(order);
+    }
+
+    @KafkaListener(topics = "stock-increase-topic", groupId = "product-group")
+    public void listenStockIncreaseRequest(String payload) throws JsonProcessingException {
+
+        log.info("kafka message -> {}", payload);
+
+        // 메시지 역직렬화
+        List<UpdateStockReqDto> products =
+                objectMapper.readValue(payload, new TypeReference<List<UpdateStockReqDto>>() {});
+
+        // 각 주문 아이템에 대해 Redis 재고 복구 처리
+        for (UpdateStockReqDto dto : products) {
+            redisStockService.increaseStock(dto.getProductId(), dto.getCnt());
+        }
     }
 }

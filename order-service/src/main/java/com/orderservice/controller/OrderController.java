@@ -77,6 +77,13 @@ public class OrderController {
         return ResponseEntity.ok(cancelService.returnOrder(orderId));
     }
 
+
+    //반품하기
+    @GetMapping("/get/items/{orderId}")
+    public ResponseEntity<?> getOrderItemsFromOrderId(@PathVariable("orderId") Long orderId) {
+        return ResponseEntity.ok(orderService.getOrderItemsFromOrderId(orderId));
+    }
+
     //바로 주문 테스트용 엔드포인트
     @PostMapping("/process/test")
     public ResponseEntity<?> orderTest(@RequestBody List<OrderReqDto> orderReqDtos) {

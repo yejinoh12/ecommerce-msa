@@ -1,16 +1,19 @@
 package com.common.dto.payment;
 
+import com.common.dto.order.UpdateStockReqDto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PaymentReqDto implements Serializable {
+public class PaymentReqDto {
     private Long orderId;
-    private Long userId;
     private int amount;
+    private List<UpdateStockReqDto> updateStockReqDtos;
 }
+

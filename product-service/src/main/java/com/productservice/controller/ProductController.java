@@ -3,7 +3,9 @@ package com.productservice.controller;
 import com.common.dto.order.AvailCheckReqDto;
 import com.common.dto.order.AvailCheckResDto;
 import com.common.dto.product.ProductInfoDto;
+import com.common.utils.ParseRequestUtil;
 import com.productservice.service.ProductService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,8 +36,16 @@ public class ProductController {
 
     //상품 상세 조회
     @GetMapping("/{productId}")
-    public ResponseEntity<?> getProductDetails( @PathVariable("productId") Long productId){
+    public ResponseEntity<?> getProductDetails(@PathVariable("productId") Long productId){
         return ResponseEntity.status(HttpStatus.OK).body(productService.getProductDetails(productId));
+    }
+
+    //좋아요
+    @GetMapping("/like/{productId}")
+    public ResponseEntity<?> getProductInfos(HttpServletRequest request,
+                                             @PathVariable("productId") Long productId) {
+        Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
+        return ResponseEntity.ok(productService.toggleLikeProduct(userId, productId));
     }
 
     //주문 서비스에서 상품 정보 요청

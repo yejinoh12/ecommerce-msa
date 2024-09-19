@@ -11,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -24,32 +22,28 @@ public class KafkaConsumer {
     private final ObjectMapper objectMapper;
 
     @KafkaListener(topics = "stock-decrease-topic", groupId = "product-group")
-    public void listenStockDecreaseRequest(String payload) {
+    public void listenStockDecreaseRequest(String payload) throws JsonProcessingException {
 
-        try {
-            UpdateStockReqDto updateStockReqDtos = objectMapper.readValue(payload, UpdateStockReqDto.class);
-            stockService.decreaseDBStock(updateStockReqDtos);
-        } catch (JsonProcessingException e) {
-            log.error("재고 업데이트 요청 처리 중 오류 발생", e);
-            throw new RuntimeException("재고 업데이트 메시지 처리 실패", e);
-        } catch (Exception e) {
-            log.error("재고 감소 중 오류 발생", e);
-            throw new RuntimeException("재고 업데이트 실패", e);
+        // 메시지 역직렬화
+        List<UpdateStockReqDto> updateStockReqDtos =
+                objectMapper.readValue(payload, new TypeReference<List<UpdateStockReqDto>>() {});
+
+        // 각 항목에 대해 재고 감소 처리
+        for (UpdateStockReqDto updateStockReqDto : updateStockReqDtos) {
+            stockService.decreaseDBStock(updateStockReqDto);
         }
     }
 
     @KafkaListener(topics = "stock-increase-topic", groupId = "product-group")
-    public void listenStockIncreaseRequest(String payload) {
+    public void listenStockIncreaseRequest(String payload) throws JsonProcessingException {
 
-        try {
-            UpdateStockReqDto updateStockReqDtos = objectMapper.readValue(payload, UpdateStockReqDto.class);
-            stockService.increaseDBStock(updateStockReqDtos);
-        } catch (JsonProcessingException e) {
-            log.error("재고 업데이트 요청 처리 중 오류 발생", e);
-            throw new RuntimeException("재고 업데이트 메시지 처리 실패", e);
-        } catch (Exception e) {
-            log.error("재고 증가 중 오류 발생", e);
-            throw new RuntimeException("재고 업데이트 실패", e);
+        // 메시지 역직렬화
+        List<UpdateStockReqDto> updateStockReqDtos =
+                objectMapper.readValue(payload, new TypeReference<List<UpdateStockReqDto>>() {});
+
+        // 각 항목에 대해 재고 증가 처리
+        for (UpdateStockReqDto updateStockReqDto : updateStockReqDtos) {
+            stockService.increaseDBStock(updateStockReqDto);
         }
     }
 }

@@ -12,6 +12,7 @@ public class ProductDetailsResDto {
     private Long p_id;
     private String name;
     private String description;
+    private int likeCount;
     private int price;
     private int stock;
     private LocalDateTime startFrom;
@@ -21,8 +22,9 @@ public class ProductDetailsResDto {
     public static ProductDetailsResDto from(Product product) {
         return ProductDetailsResDto.builder()
                 .p_id(product.getId())
-                .description(product.getDescription())
                 .name(product.getName())
+                .description(product.getDescription())
+                .likeCount(product.getLikeCount())
                 .price(product.getPrice())
                 .stock(product.getStock())
                 .startFrom(product.getStartTime())

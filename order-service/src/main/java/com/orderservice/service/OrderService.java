@@ -2,6 +2,7 @@ package com.orderservice.service;
 
 import com.common.dto.order.AvailCheckReqDto;
 import com.common.dto.order.AvailCheckResDto;
+import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.payment.PaymentReqDto;
 import com.common.dto.product.CartResDto;
 import com.common.dto.user.UserInfoDto;
@@ -22,7 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -47,7 +51,8 @@ public class OrderService {
                 new AvailCheckReqDto(orderReqDto.getProductId(), orderReqDto.getCnt());
 
         //확인 요청
-        AvailCheckResDto availCheckResDto = productServiceClient.checkPurchaseAvailability(availCheckReqDto);
+        AvailCheckResDto availCheckResDto =
+                productServiceClient.checkPurchaseAvailability(availCheckReqDto);
 
         //재고 검증
         if (!availCheckResDto.isHasStock()) {
@@ -59,11 +64,7 @@ public class OrderService {
             throw new BaseBizException("판매 시간이 아닙니다.");
         }
 
-        //주문 고객 정보
-        UserInfoDto userInfoDto = userServiceClient.getUserInfo(userId);
-
         //배송지 정보
-
 
         //DTO 생성
         DirectOrderPreviewDto responseDto = DirectOrderPreviewDto.builder()
@@ -86,12 +87,18 @@ public class OrderService {
         //최종 가격 계산
         int totalPrice = orderReqDto.getUnitPrice() * orderReqDto.getCnt();
 
-        //주문 및 주문 아이템 생성
+        //주문 생성
         Order order = createAndSaveOrder(userId, totalPrice);
+
+        //주문 아이템 생성
         createOrderItems(order, orderReqDto);
 
+        //재고 감소 상품 리스트
+        List<UpdateStockReqDto> products = new ArrayList<>();
+        products.add(new UpdateStockReqDto(orderReqDto.getProductId(), orderReqDto.getCnt()));
+
         // 결제 요청
-        PaymentReqDto paymentRequest = new PaymentReqDto(order.getId(), userId, totalPrice);
+        PaymentReqDto paymentRequest = new PaymentReqDto(order.getId(), totalPrice, products);
         kafkaProducer.sendPaymentRequest(paymentRequest);
 
         return new ApiResponse<>(201, "주문 요청 완료", OrderResDto.from(order));
@@ -111,7 +118,7 @@ public class OrderService {
                 .mapToInt(cartResDto -> cartResDto.getUnitPrice() * cartResDto.getCnt())
                 .sum();
 
-        //수령인 정보와 사용자 배송지 정보 추가
+        //배송지 정보 추가
 
         //DTO 생성
         OrderPreviewDto responseDto = OrderPreviewDto.builder()
@@ -141,13 +148,16 @@ public class OrderService {
         //주문 생성
         Order order = createAndSaveOrder(userId, totalPrice);
 
-        //주문 아이템 생성
+        //주문 아이템 생성 및 재고 감소 상품 리스트 생성
+        List<UpdateStockReqDto> products = new ArrayList<>();
+
         for (OrderReqDto orderReqDto : orderReqDtos) {
             createOrderItems(order, orderReqDto);
+            products.add(new UpdateStockReqDto(orderReqDto.getProductId(), orderReqDto.getCnt()));
         }
 
         // 결제 요청
-        PaymentReqDto paymentRequest = new PaymentReqDto(order.getId(), userId, totalPrice);
+        PaymentReqDto paymentRequest = new PaymentReqDto(order.getId(), totalPrice, products);
         kafkaProducer.sendPaymentRequest(paymentRequest);
 
         return new ApiResponse<>(201, "주문 요청 완료", OrderResDto.from(order));
@@ -157,7 +167,6 @@ public class OrderService {
     private Order createAndSaveOrder(Long userId, int totalPrice) {
         Order order = Order.createOrder(userId, totalPrice);
         orderRepository.save(order);
-        log.info("주문 생성 성공 orderId = {}, totalPrice={}", order.getId(), order.getTotalPrice());
         return order;
     }
 
@@ -197,7 +206,9 @@ public class OrderService {
         //2.사용자 정보 DTO
         UserInfoDto userInfoDto = userServiceClient.getUserInfo(userId);
 
-        //3.주문 했던 상품 정보 DTO
+        //3.배송지 정보 DTO
+
+        //4.주문 했던 상품 정보 DTO
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
         List<OrderItemDto> orderItemDtos = orderItems.stream()
                 .map(OrderItemDto::from)
@@ -211,5 +222,20 @@ public class OrderService {
                 .build();
 
         return ApiResponse.ok(200, "주문 상세 조회 성공", orderDetailsDto);
+    }
+
+    public List<UpdateStockReqDto> getOrderItemsFromOrderId(Long orderId) {
+
+        // 주문 ID로 주문을 조회
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
+
+        // 주문에서 주문 아이템 목록 가져오기
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
+
+        // 주문 아이템을 UpdateStockReqDto로 변환
+        return orderItems.stream()
+                .map(item -> new UpdateStockReqDto(item.getProductId(), item.getQuantity()))
+                .collect(Collectors.toList());
     }
 }
