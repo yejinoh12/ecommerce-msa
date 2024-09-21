@@ -4,7 +4,8 @@ import com.common.dto.order.AvailCheckReqDto;
 import com.common.dto.order.AvailCheckResDto;
 import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.payment.PaymentReqDto;
-import com.common.dto.product.CartResDto;
+import com.common.dto.product.CartItemsDto;
+import com.common.dto.user.AddressResDto;
 import com.common.dto.user.UserInfoDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
@@ -13,8 +14,10 @@ import com.orderservice.client.UserServiceClient;
 import com.orderservice.dto.order.*;
 import com.orderservice.dto.orderHistory.OrderDetailsDto;
 import com.orderservice.dto.orderHistory.OrderListDto;
+import com.orderservice.entity.DeliveryStatus;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
+import com.orderservice.entity.OrderStatus;
 import com.orderservice.kafka.KafkaProducer;
 import com.orderservice.repository.OrderItemRepository;
 import com.orderservice.repository.OrderRepository;
@@ -24,9 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -44,7 +45,7 @@ public class OrderService {
     private final RedisStockService redisStockService;
 
     //바로 구매 전 정보 확인
-    public ApiResponse<DirectOrderPreviewDto> directPurchasePreview(OrderReqDto orderReqDto, Long userId) {
+    public ApiResponse<OrderReqDto> directPurchasePreview(OrderReqDto orderReqDto, Long userId) {
 
         //이벤트 시간 및 재고 검증 DTO
         AvailCheckReqDto availCheckReqDto =
@@ -65,16 +66,14 @@ public class OrderService {
         }
 
         //배송지 정보
+        AddressResDto addressResDto = userServiceClient.getDefaultAddress(userId);
 
-        //DTO 생성
-        DirectOrderPreviewDto responseDto = DirectOrderPreviewDto.builder()
-                .productId(orderReqDto.getProductId())
-                .name(orderReqDto.getName())
-                .quantity(orderReqDto.getCnt())
-                .totalPrice(orderReqDto.getUnitPrice() * orderReqDto.getCnt())
-                .build();
+        orderReqDto.setAddrAlias(addressResDto.getAlias());
+        orderReqDto.setAddress(addressResDto.getAddress());
+        orderReqDto.setAddrDetail(addressResDto.getDetailAddress());
+        orderReqDto.setPhone(addressResDto.getPhone());
 
-        return new ApiResponse<>(201, "결제를 진행해주세요.", responseDto);
+        return new ApiResponse<>(201, "결제를 진행해주세요.", orderReqDto);
     }
 
     //바로 구매
@@ -88,7 +87,7 @@ public class OrderService {
         int totalPrice = orderReqDto.getUnitPrice() * orderReqDto.getCnt();
 
         //주문 생성
-        Order order = createAndSaveOrder(userId, totalPrice);
+        Order order = createAndSaveOrder(orderReqDto, userId, totalPrice);
 
         //주문 아이템 생성
         createOrderItems(order, orderReqDto);
@@ -111,19 +110,21 @@ public class OrderService {
         log.info("주문 전 장바구니 조회 : 사용자 ID = {}", userId);
 
         //장바구니에 있는 아이템 조회 요청
-        List<CartResDto> cartResDtos = productServiceClient.getOrderItems(userId);
+        List<CartItemsDto> cartItemsDtos = productServiceClient.getOrderItems(userId);
 
         //최종 가격 계산
-        int totalOrderPrice = cartResDtos.stream()
-                .mapToInt(cartResDto -> cartResDto.getUnitPrice() * cartResDto.getCnt())
+        int totalOrderPrice = cartItemsDtos.stream()
+                .mapToInt(cartItemsDto -> cartItemsDto.getUnitPrice() * cartItemsDto.getCnt())
                 .sum();
 
         //배송지 정보 추가
+        AddressResDto addressResDto = userServiceClient.getDefaultAddress(userId);
 
         //DTO 생성
         OrderPreviewDto responseDto = OrderPreviewDto.builder()
                 .totalPrice(totalOrderPrice)
-                .orderReqItems(cartResDtos)
+                .addressResDto(addressResDto)
+                .orderReqItems(cartItemsDtos)
                 .build();
 
         return new ApiResponse<>(201, "결제를 진행해주세요.", responseDto);
@@ -131,29 +132,27 @@ public class OrderService {
 
     //주문
     @Transactional
-    public ApiResponse<OrderResDto> orderFromCart(List<OrderReqDto> orderReqDtos, Long userId) {
+    public ApiResponse<OrderResDto> orderFromCart(OrderPreviewDto orderReqDtos, Long userId) {
 
         log.info("주문 처리 시작: 사용자 ID = {}", userId);
 
         //레디스 재고 감소
-        for (OrderReqDto orderReqDto : orderReqDtos) {
-            redisStockService.decreaseStockWithLock(orderReqDto.getProductId(), orderReqDto.getCnt());
+        for (CartItemsDto dto : orderReqDtos.getOrderReqItems()) {
+            redisStockService.decreaseStockWithLock(dto.getProductId(), dto.getCnt());
         }
 
         //최종 가격 계산
-        int totalPrice = orderReqDtos.stream()
-                .mapToInt(orderReqDto -> orderReqDto.getUnitPrice() * orderReqDto.getCnt())
-                .sum();
+        int totalPrice = orderReqDtos.getTotalPrice();
 
         //주문 생성
-        Order order = createAndSaveOrder(userId, totalPrice);
+        Order order = createAndSaveOrder(orderReqDtos.getAddressResDto(), userId, totalPrice);
 
         //주문 아이템 생성 및 재고 감소 상품 리스트 생성
         List<UpdateStockReqDto> products = new ArrayList<>();
 
-        for (OrderReqDto orderReqDto : orderReqDtos) {
-            createOrderItems(order, orderReqDto);
-            products.add(new UpdateStockReqDto(orderReqDto.getProductId(), orderReqDto.getCnt()));
+        for (CartItemsDto cartItemsDto : orderReqDtos.getOrderReqItems()) {
+            createOrderItems(order, cartItemsDto);
+            products.add(new UpdateStockReqDto(cartItemsDto.getProductId(), cartItemsDto.getCnt()));
         }
 
         // 결제 요청
@@ -164,8 +163,37 @@ public class OrderService {
     }
 
     //주문 생성
-    private Order createAndSaveOrder(Long userId, int totalPrice) {
-        Order order = Order.createOrder(userId, totalPrice);
+    private Order createAndSaveOrder(OrderReqDto orderReqDto, Long userId, int totalPrice) {
+
+        Order order = Order.builder()
+                .userId(userId)
+                .totalPrice(totalPrice)
+                .orderStatus(OrderStatus.PAYMENT_IN_PROGRESS)
+                .deliveryStatus(DeliveryStatus.PENDING)
+                .addressAlias(orderReqDto.getAddrAlias())
+                .address(orderReqDto.getAddress())
+                .detailAddress(orderReqDto.getAddrDetail())
+                .phone(orderReqDto.getPhone())
+                .build();
+
+        orderRepository.save(order);
+        return order;
+    }
+
+    //장바구니 주문
+    private Order createAndSaveOrder(AddressResDto addressResDto, Long userId, int totalPrice) {
+
+        Order order = Order.builder()
+                .userId(userId)
+                .totalPrice(totalPrice)
+                .orderStatus(OrderStatus.PAYMENT_IN_PROGRESS)
+                .deliveryStatus(DeliveryStatus.PENDING)
+                .addressAlias(addressResDto.getAlias())
+                .address(addressResDto.getAddress())
+                .detailAddress(addressResDto.getDetailAddress())
+                .phone(addressResDto.getPhone())
+                .build();
+
         orderRepository.save(order);
         return order;
     }
@@ -179,6 +207,20 @@ public class OrderService {
                 orderReqDto.getName(),
                 orderReqDto.getUnitPrice(),
                 orderReqDto.getCnt()
+        );
+
+        orderItemRepository.save(orderItem);
+    }
+
+    //주문 아이템 생성
+    private void createOrderItems(Order order, CartItemsDto cartItemsDto) {
+
+        OrderItem orderItem = OrderItem.createOrderItem(
+                order,
+                cartItemsDto.getProductId(),
+                cartItemsDto.getName(),
+                cartItemsDto.getUnitPrice(),
+                cartItemsDto.getCnt()
         );
 
         orderItemRepository.save(orderItem);
@@ -200,42 +242,33 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new BaseBizException("orderID " + orderId + "인 주문을 찾을 수 없습니다."));
 
-        //1.주문 정보 DTO
+        //주문 정보
         OrderResDto orderResDto = OrderResDto.from(order);
 
-        //2.사용자 정보 DTO
+        //사용자 정보
         UserInfoDto userInfoDto = userServiceClient.getUserInfo(userId);
 
-        //3.배송지 정보 DTO
+        //배송지 정보
+        AddressResDto addressResDto = AddressResDto.builder()
+                .alias(order.getAddressAlias())
+                .address(order.getAddress())
+                .detailAddress(order.getDetailAddress())
+                .phone(order.getPhone())
+                .build();
 
-        //4.주문 했던 상품 정보 DTO
+        //주문 상품 정보
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
         List<OrderItemDto> orderItemDtos = orderItems.stream()
                 .map(OrderItemDto::from)
                 .collect(Collectors.toList());
 
-        //응답 DTO
         OrderDetailsDto orderDetailsDto = OrderDetailsDto.builder()
                 .orderInfo(orderResDto)
+                .addressInfo(addressResDto)
                 .userInfo(userInfoDto)
                 .items(orderItemDtos)
                 .build();
 
         return ApiResponse.ok(200, "주문 상세 조회 성공", orderDetailsDto);
-    }
-
-    public List<UpdateStockReqDto> getOrderItemsFromOrderId(Long orderId) {
-
-        // 주문 ID로 주문을 조회
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 주문을 찾을 수 없습니다."));
-
-        // 주문에서 주문 아이템 목록 가져오기
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(orderId);
-
-        // 주문 아이템을 UpdateStockReqDto로 변환
-        return orderItems.stream()
-                .map(item -> new UpdateStockReqDto(item.getProductId(), item.getQuantity()))
-                .collect(Collectors.toList());
     }
 }

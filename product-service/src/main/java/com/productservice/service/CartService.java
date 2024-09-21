@@ -1,5 +1,6 @@
 package com.productservice.service;
 
+import com.common.dto.product.CartItemsDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
 import com.productservice.entity.Cart;
@@ -137,7 +138,7 @@ public class CartService {
     }
 
     //주문 서비스에서 장바구니 조회
-    public List<com.common.dto.product.CartResDto> getCartItemsForOrder(Long userId) {
+    public List<CartItemsDto> getCartItemsForOrder(Long userId) {
 
         log.info("주문 서비스 장바구니 조회 요청, userId={}", userId);
 
@@ -145,7 +146,7 @@ public class CartService {
 
         return cartItemRepository.findByCartId(cart.getId())
                 .stream()
-                .map(item -> com.common.dto.product.CartResDto.builder()
+                .map(item -> CartItemsDto.builder()
                         .productId(item.getProduct().getId())
                         .name(item.getProduct().getName())
                         .unitPrice(item.getProduct().getPrice())

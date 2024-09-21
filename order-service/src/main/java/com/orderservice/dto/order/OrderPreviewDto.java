@@ -1,6 +1,7 @@
 package com.orderservice.dto.order;
 
-import com.common.dto.product.CartResDto;
+import com.common.dto.product.CartItemsDto;
+import com.common.dto.user.AddressResDto;
 import lombok.Builder;
 import lombok.Data;
 import java.util.List;
@@ -9,5 +10,6 @@ import java.util.List;
 @Builder
 public class OrderPreviewDto {
     private int totalPrice;
-    private List<CartResDto> orderReqItems;
+    private AddressResDto addressResDto;
+    private List<CartItemsDto> orderReqItems;
 }

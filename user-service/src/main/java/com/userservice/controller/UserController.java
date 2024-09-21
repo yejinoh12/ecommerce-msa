@@ -47,5 +47,4 @@ public class UserController {
     public ResponseEntity<UserInfoDto> getUserInfo(@RequestHeader("X-Claim-userId") Long userId){
         return ResponseEntity.ok(userService.getUserInfo(userId));
     }
-
 }

@@ -1,6 +1,7 @@
 package com.orderservice.controller;
 
 import com.common.utils.ParseRequestUtil;
+import com.orderservice.dto.order.OrderPreviewDto;
 import com.orderservice.dto.order.OrderReqDto;
 import com.orderservice.service.CancelService;
 import com.orderservice.service.OrderService;
@@ -10,7 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Random;
 
 @Slf4j
@@ -46,9 +46,9 @@ public class OrderController {
 
     // 장바구니 상품 구매
     @PostMapping("/process")
-    public ResponseEntity<?> order(@RequestBody List<OrderReqDto> orderReqDtos, HttpServletRequest request) {
+    public ResponseEntity<?> order(@RequestBody OrderPreviewDto orderPreviewDto, HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.orderFromCart(orderReqDtos, userId));
+        return ResponseEntity.ok(orderService.orderFromCart(orderPreviewDto, userId));
     }
 
     //주문 내역 보기
@@ -77,19 +77,12 @@ public class OrderController {
         return ResponseEntity.ok(cancelService.returnOrder(orderId));
     }
 
-
-    //반품하기
-    @GetMapping("/get/items/{orderId}")
-    public ResponseEntity<?> getOrderItemsFromOrderId(@PathVariable("orderId") Long orderId) {
-        return ResponseEntity.ok(orderService.getOrderItemsFromOrderId(orderId));
-    }
-
     //바로 주문 테스트용 엔드포인트
     @PostMapping("/process/test")
-    public ResponseEntity<?> orderTest(@RequestBody List<OrderReqDto> orderReqDtos) {
+    public ResponseEntity<?> orderTest(@RequestBody OrderPreviewDto orderPreviewDto) {
         Random random = new Random();
         Long userId = (long) (random.nextInt(1000) + 1);
-        return ResponseEntity.ok(orderService.orderFromCart(orderReqDtos, userId));
+        return ResponseEntity.ok(orderService.orderFromCart(orderPreviewDto, userId));
     }
 
 }

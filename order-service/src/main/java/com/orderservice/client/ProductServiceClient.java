@@ -3,7 +3,7 @@ package com.orderservice.client;
 import com.common.dto.order.AvailCheckReqDto;
 import com.common.dto.order.AvailCheckResDto;
 import com.common.dto.order.UpdateStockReqDto;
-import com.common.dto.product.CartResDto;
+import com.common.dto.product.CartItemsDto;
 import com.common.dto.product.ProductInfoDto;
 import com.common.dto.product.StockResDto;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -16,7 +16,7 @@ public interface ProductServiceClient {
 
     //장바구니 조회
     @GetMapping("/cart/get-items")
-    List<CartResDto> getOrderItems(@RequestHeader("X-Claim-userId") Long userId);
+    List<CartItemsDto> getOrderItems(@RequestHeader("X-Claim-userId") Long userId);
 
     //장바구니 삭제
     @GetMapping("/cart/clear/after-order")

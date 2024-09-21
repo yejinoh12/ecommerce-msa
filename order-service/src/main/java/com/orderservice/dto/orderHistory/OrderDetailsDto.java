@@ -1,9 +1,11 @@
 package com.orderservice.dto.orderHistory;
 
+import com.common.dto.user.AddressResDto;
 import com.common.dto.user.UserInfoDto;
 import com.orderservice.dto.order.OrderItemDto;
 import com.orderservice.dto.order.OrderResDto;
 import lombok.*;
+import org.springframework.boot.autoconfigure.amqp.RabbitConnectionDetails;
 
 import java.util.List;
 
@@ -18,5 +20,6 @@ import java.util.List;
 public class OrderDetailsDto {
     private OrderResDto orderInfo;
     private UserInfoDto userInfo;
+    private AddressResDto addressInfo;
     private List<OrderItemDto> items;
 }

@@ -12,6 +12,6 @@ public interface UserServiceClient {
     @GetMapping("/user/info")
     UserInfoDto getUserInfo(@RequestHeader("X-Claim-userId") Long userId);
 
-    @GetMapping("/user/default/address")
+    @GetMapping("/user/address/default")
     AddressResDto getDefaultAddress(@RequestHeader("X-Claim-userId") Long userId);
 }

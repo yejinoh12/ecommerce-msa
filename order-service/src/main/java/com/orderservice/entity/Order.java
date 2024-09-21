@@ -6,6 +6,8 @@ import lombok.*;
 
 @Entity
 @Getter
+@Builder
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "orders")
 public class Order extends BaseEntity {
@@ -28,16 +30,11 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private DeliveryStatus deliveryStatus;
 
-    private Order(Long userId, int totalPrice, OrderStatus orderStatus, DeliveryStatus deliveryStatus) {
-        this.userId = userId;
-        this.totalPrice = totalPrice;
-        this.orderStatus = orderStatus;
-        this.deliveryStatus = deliveryStatus;
-    }
-
-    public static Order createOrder(Long userId, int totalPrice) {
-        return new Order(userId, totalPrice, OrderStatus.PAYMENT_IN_PROGRESS, DeliveryStatus.PENDING);
-    }
+    //배송지 필드 추가
+    private String addressAlias;
+    private String address;
+    private String detailAddress;
+    private String phone;
 
 
     //상태 변경 메서드들
