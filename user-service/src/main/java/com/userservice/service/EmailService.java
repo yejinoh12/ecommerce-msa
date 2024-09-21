@@ -1,8 +1,9 @@
-package com.userservice.service.email;
+package com.userservice.service;
 
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
 import com.userservice.dto.EmailValidReqDto;
+import com.userservice.redis.EmailRedis;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +21,7 @@ import java.util.Random;
 public class EmailService {
 
     private final JavaMailSender mailSender;
-    private final EmailRedisService emailRedisService;
+    private final EmailRedis emailRedis;
 
     @Value("${email.setForm}")
     private String setForm;
@@ -35,7 +36,7 @@ public class EmailService {
         String code = Integer.toString(makeRandomNumber());
         String content = String.format(EMAIL_CONTENT_TEMPLATE, code);
         mailSend(setForm, email, EMAIL_TITLE, content);
-        emailRedisService.setEmailVerificationCode(email, code); //Redis 저장
+        emailRedis.setEmailVerificationCode(email, code); //Redis 저장
         return ApiResponse.ok(200, "인증 번호 발송 성공", code);
     }
 
@@ -67,7 +68,7 @@ public class EmailService {
     //이메일 인증 완료 후 상태 변경
     public ApiResponse<?> verifyCode(EmailValidReqDto emailValidReqDto) {
 
-        String code = emailRedisService.getEmailVerificationCode(emailValidReqDto.getEmail());
+        String code = emailRedis.getEmailVerificationCode(emailValidReqDto.getEmail());
 
         if(code == null) {
             throw new BaseBizException("등록되지 않은 이메일입니다.");
@@ -77,7 +78,7 @@ public class EmailService {
             throw new BaseBizException("이메일 인증코드가 일치하지 않습니다.");
         }
 
-        emailRedisService.updateAuthenticationStatus(emailValidReqDto.getEmail()); //상태를 "Y"로 변경
+        emailRedis.updateAuthenticationStatus(emailValidReqDto.getEmail()); //상태를 "Y"로 변경
         return ApiResponse.ok(200, "이메일 인증 성공", null);
     }
 }

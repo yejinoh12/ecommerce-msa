@@ -1,4 +1,4 @@
-package com.userservice.service.user;
+package com.userservice.service;
 
 import com.common.dto.user.AddressResDto;
 import com.common.exception.BaseBizException;

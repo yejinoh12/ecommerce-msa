@@ -1,7 +1,7 @@
 package com.userservice.controller;
 
 import com.userservice.dto.EmailValidReqDto;
-import com.userservice.service.email.EmailService;
+import com.userservice.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;

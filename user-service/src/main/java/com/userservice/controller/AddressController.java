@@ -1,10 +1,9 @@
 package com.userservice.controller;
 
 import com.common.dto.user.AddressResDto;
-import com.common.response.ApiResponse;
 import com.common.utils.ParseRequestUtil;
 import com.userservice.dto.AddressAddReqDto;
-import com.userservice.service.user.AddressService;
+import com.userservice.service.AddressService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

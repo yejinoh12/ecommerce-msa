@@ -1,4 +1,4 @@
-package com.userservice.service.token;
+package com.userservice.redis;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class TokenRedisService {
+public class RefreshTokeRedis {
 
     private final StringRedisTemplate refreshTokenRedisTemplate;
     protected static final String PREFIX = "refresh:";

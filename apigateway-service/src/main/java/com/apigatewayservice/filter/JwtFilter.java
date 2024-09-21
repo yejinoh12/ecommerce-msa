@@ -1,5 +1,6 @@
 package com.apigatewayservice.filter;
 
+import com.apigatewayservice.redis.BlacklistRedis;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -31,11 +32,13 @@ import java.util.Map;
 public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
 
     private final Environment env;
+    private final BlacklistRedis blacklistRedis;
     private Key key;
 
-    public JwtFilter(Environment env) {
+    public JwtFilter(Environment env, BlacklistRedis blacklistRedis) {
         super(Config.class);
         this.env = env;
+        this.blacklistRedis= blacklistRedis;
     }
 
     @PostConstruct
@@ -70,6 +73,11 @@ public class JwtFilter extends AbstractGatewayFilterFactory<JwtFilter.Config> {
             }
 
             String token = authHeader.substring(7);
+
+            // 블랙리스트 확인
+            if (blacklistRedis.isTokenBlacklisted(token)) {
+                return onError(response, "The token is blacklisted");
+            }
 
             try {
 

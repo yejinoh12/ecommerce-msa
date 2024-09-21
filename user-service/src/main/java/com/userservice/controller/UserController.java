@@ -3,8 +3,8 @@ package com.userservice.controller;
 import com.common.dto.user.UserInfoDto;
 import com.common.utils.ParseRequestUtil;
 import com.userservice.dto.SignUpReqDto;
-import com.userservice.service.token.TokenService;
-import com.userservice.service.user.UserService;
+import com.userservice.service.RefreshTokenService;
+import com.userservice.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
-    private final TokenService tokenService;
+    private final RefreshTokenService tokenService;
 
     //회원 가입
     @PostMapping("/signup")

@@ -46,11 +46,7 @@ public class JwtUtil {
         key = Keys.hmacShaKeyFor(bytes);
     }
 
-
-    /**********************************************************
-     * access token
-     **********************************************************/
-
+    //액세스 토큰 생성
     public String createAccessToken(String userId, UserRoleEnum role) {
 
         Date date = new Date();
@@ -68,10 +64,6 @@ public class JwtUtil {
                         .signWith(key, signatureAlgorithm)                          // 암호화 알고리즘
                         .compact();
     }
-
-    /**********************************************************
-     * refresh token
-     **********************************************************/
 
     //리프레시 토큰 발급
     public String createRefreshToken(String userId) {
@@ -136,10 +128,6 @@ public class JwtUtil {
         return null;
     }
 
-    /**********************************************************
-     * etc
-     **********************************************************/
-
     // 토큰 검증
     public boolean validateToken(String token) {
         try {
@@ -162,16 +150,28 @@ public class JwtUtil {
         if (StringUtils.hasText(tokenValue) && tokenValue.startsWith(BEARER_PREFIX)) {
             return tokenValue.substring(7);
         }
-        log.error("토큰을 찾을 수 없습니다.");
         throw new BaseBizException("유효한 토큰이 없습니다. 다시 로그인 해주세요.", HttpStatus.BAD_REQUEST);
     }
 
-    //토큰에서 user 정보 추출
-    public Claims getUserInfoFromToken(String token) {
+    //토큰에서 claim 추출
+    public Claims getClaimFromToken(String substringToken) {
         try {
-            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+            return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(substringToken).getBody();
         } catch (ExpiredJwtException e) {
             return e.getClaims();
+        }
+    }
+
+    // 토큰 만료 시간을 추출 (현재 시간과 만료 시간의 차이)
+    public long getAccessTokenExpirationTime(String substringToken) {
+        try {
+            Claims claims = getClaimFromToken(substringToken);
+            log.info(claims.getExpiration().toString());
+            return claims.getExpiration().getTime() - System.currentTimeMillis();
+        } catch (ExpiredJwtException e) {
+            return 0L;
+        } catch (Exception e) {
+            return 6000L; //기본 값
         }
     }
 }

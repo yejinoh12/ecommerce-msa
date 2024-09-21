@@ -2,8 +2,10 @@ package com.userservice.config;
 
 import com.userservice.security.LoginFilter;
 import com.userservice.security.JwtValidationFilter;
+import com.userservice.security.LogoutFilter;
 import com.userservice.security.UserDetailsServiceImpl;
-import com.userservice.service.token.TokenRedisService;
+import com.userservice.redis.BlacklistRedis;
+import com.userservice.redis.RefreshTokeRedis;
 import com.userservice.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,9 +24,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class WebSecurityConfig {
 
     private final JwtUtil jwtUtil;
-    private final TokenRedisService tokenRedisService;
+    private final RefreshTokeRedis refreshTokenService;
+    private final BlacklistRedis blacklistRedis;
     private final UserDetailsServiceImpl userDetailsService;
-    private final AuthenticationConfiguration authenticationConfiguration; //Authentication Manager 생성
+    private final AuthenticationConfiguration authenticationConfiguration;
 
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
@@ -33,14 +36,14 @@ public class WebSecurityConfig {
 
     @Bean
     public LoginFilter jwtAuthenticationFilter() throws Exception {
-        LoginFilter filter = new LoginFilter(jwtUtil, tokenRedisService);
+        LoginFilter filter = new LoginFilter(jwtUtil, refreshTokenService);
         filter.setAuthenticationManager(authenticationManager(authenticationConfiguration));
         return filter;
     }
 
     @Bean
     public JwtValidationFilter jwtAuthorizationFilter() {
-        return new JwtValidationFilter(jwtUtil, tokenRedisService, userDetailsService);
+        return new JwtValidationFilter(jwtUtil, blacklistRedis, userDetailsService);
     }
 
     @Bean
@@ -67,7 +70,17 @@ public class WebSecurityConfig {
                         .anyRequest().authenticated()
         );
 
-        // 필터 관리
+        //로그아웃 필터
+        http.logout(logoutConfigurer ->
+                        logoutConfigurer
+                                .addLogoutHandler(new LogoutFilter(jwtUtil, refreshTokenService, blacklistRedis))
+                                .logoutSuccessHandler(new LogoutFilter(jwtUtil, refreshTokenService, blacklistRedis))
+                                .logoutUrl("/user/logout")
+                                .invalidateHttpSession(true)
+                                .permitAll()
+                );
+
+        // 필터
         http.addFilterBefore(jwtAuthorizationFilter(), LoginFilter.class);
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 

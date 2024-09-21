@@ -3,7 +3,7 @@ package com.userservice.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.userservice.entity.UserRoleEnum;
 import com.userservice.dto.LoginReqDto;
-import com.userservice.service.token.TokenRedisService;
+import com.userservice.redis.RefreshTokeRedis;
 import com.userservice.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,11 +23,11 @@ import java.io.IOException;
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final JwtUtil jwtUtil;
-    private final TokenRedisService tokenRedisService;
+    private final RefreshTokeRedis refreshTokenService;
 
-    public LoginFilter(JwtUtil jwtUtil, TokenRedisService tokenRedisService) {
+    public LoginFilter(JwtUtil jwtUtil, RefreshTokeRedis refreshTokenService) {
         this.jwtUtil = jwtUtil;
-        this.tokenRedisService = tokenRedisService;
+        this.refreshTokenService = refreshTokenService;
         setFilterProcessesUrl("/user/login");
     }
 
@@ -67,7 +67,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String accessToken = jwtUtil.createAccessToken(userId, role);
         String refreshToken = jwtUtil.createRefreshToken(userId);
 
-        tokenRedisService.setRefreshToken(userId, refreshToken);
+        refreshTokenService.setRefreshToken(userId, refreshToken);
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, accessToken);
         jwtUtil.addRefreshTokenToCookie(refreshToken, response);
 

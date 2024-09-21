@@ -1,9 +1,10 @@
-package com.userservice.service.token;
+package com.userservice.service;
 
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
 import com.userservice.dto.TokenResDto;
 import com.userservice.entity.UserRoleEnum;
+import com.userservice.redis.RefreshTokeRedis;
 import com.userservice.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,10 +17,10 @@ import org.springframework.util.StringUtils;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class TokenService {
+public class RefreshTokenService {
 
     private final JwtUtil jwtUtil;
-    private final TokenRedisService tokenRedisService;
+    private final RefreshTokeRedis refreshTokenService;
 
     public ApiResponse<TokenResDto> refreshAccessToken(HttpServletRequest request, HttpServletResponse response){
 
@@ -28,8 +29,8 @@ public class TokenService {
         String SubstringRefreshTokenFromCookie = jwtUtil.substringToken(refreshTokenFromCookie);
 
         //레디스에서 리프레시 토큰 가져오기
-        String userId = jwtUtil.getUserInfoFromToken(SubstringRefreshTokenFromCookie).getSubject(); //토큰에서 유저 ID 가져오기
-        String refreshTokenFromRedis = tokenRedisService.getRefreshToken(userId);
+        String userId = jwtUtil.getClaimFromToken(SubstringRefreshTokenFromCookie).getSubject(); //토큰에서 유저 ID 가져오기
+        String refreshTokenFromRedis = refreshTokenService.getRefreshToken(userId);
         String SubstringRefreshTokenFromRedis = jwtUtil.substringToken(refreshTokenFromRedis);
 
         //유효성 검증
@@ -43,7 +44,7 @@ public class TokenService {
         String newAccessToken = jwtUtil.createAccessToken(userId, UserRoleEnum.USER);
         String newRefreshToken = jwtUtil.createRefreshToken(userId);
 
-        tokenRedisService.setRefreshToken(userId, newRefreshToken);
+        refreshTokenService.setRefreshToken(userId, newRefreshToken);
         response.setHeader(JwtUtil.AUTHORIZATION_HEADER, newAccessToken);
         jwtUtil.addRefreshTokenToCookie(newRefreshToken, response);
 

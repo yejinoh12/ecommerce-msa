@@ -1,4 +1,4 @@
-package com.userservice.service.email;
+package com.userservice.redis;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.HashOperations;
@@ -9,7 +9,7 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
-public class EmailRedisService {
+public class EmailRedis {
 
     private final StringRedisTemplate emailRedisTemplate;
     private static final String PREFIX = "email:";

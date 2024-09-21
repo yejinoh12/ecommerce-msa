@@ -1,7 +1,7 @@
 package com.userservice.security;
 
 import com.common.exception.BaseBizException;
-import com.userservice.service.token.TokenRedisService;
+import com.userservice.redis.BlacklistRedis;
 import com.userservice.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -26,7 +26,7 @@ import java.io.IOException;
 public class JwtValidationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final TokenRedisService tokenRedisService;
+    private final BlacklistRedis blacklistRedis;
     private final UserDetailsServiceImpl userDetailsService;
 
     @Override
@@ -38,15 +38,23 @@ public class JwtValidationFilter extends OncePerRequestFilter {
 
             try {
 
-                tokenValue = jwtUtil.substringToken(tokenValue);             // "Bearer " 삭제
+                tokenValue = jwtUtil.substringToken(tokenValue);
 
-                if (!jwtUtil.validateToken(tokenValue)) {                    // 액세스 토큰 유효성 검사
+                // 블랙리스트 확인
+                if (blacklistRedis.isTokenBlacklisted(tokenValue)) {
+                    log.error("블랙리스트에 있는 액세스 토큰입니다.");
+                    throw new BaseBizException("로그아웃된 사용자입니다.");
+                }
+
+                // 액세스 토큰 유효성 검사
+                if (!jwtUtil.validateToken(tokenValue)) {
                     log.error("액세스 토큰 검증 실패");
                     throw new BaseBizException("액새스 토큰이 만료 되었습니다.");
                 }
 
-                Claims info = jwtUtil.getUserInfoFromToken(tokenValue);
-                String userId = info.get("userId", String.class);  // userId를 클레임에서 추출
+                // userId를 클레임에서 추출
+                Claims info = jwtUtil.getClaimFromToken(tokenValue);
+                String userId = info.get("userId", String.class);
 
                 log.error("액세스 토큰 검증 성공");
                 log.info("사용자 ID = {}" , userId);

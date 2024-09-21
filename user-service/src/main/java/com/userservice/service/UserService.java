@@ -1,4 +1,4 @@
-package com.userservice.service.user;
+package com.userservice.service;
 
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
@@ -9,7 +9,7 @@ import com.userservice.dto.SignUpReqDto;
 import com.userservice.dto.UserResDto;
 import com.userservice.repository.AddressRepository;
 import com.userservice.repository.UserRepository;
-import com.userservice.service.email.EmailRedisService;
+import com.userservice.redis.EmailRedis;
 import com.userservice.util.AesUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,11 +25,8 @@ public class UserService {
 
     private final AesUtil aesUtil;
     private final PasswordEncoder passwordEncoder;
-
     private final UserRepository userRepository;
-    private final AddressRepository addressRepository;
-
-    private final EmailRedisService emailRedisService;
+    private final EmailRedis emailRedis;
 
     //회원가입
     @Transactional
@@ -44,7 +41,7 @@ public class UserService {
         }
 
         //이메일 인증 여부 확인
-        String status = emailRedisService.getAuthenticationStatus(signUpReqDto.getEmail());
+        String status = emailRedis.getAuthenticationStatus(signUpReqDto.getEmail());
         if (status == null || !status.equals("Y")) {
             throw new BaseBizException("이메일 인증 후 시도해 주세요.");
         }
@@ -63,7 +60,7 @@ public class UserService {
         userRepository.save(user);
 
         //이메일 인증 정보 삭제
-        emailRedisService.deleteEmailInfo(signUpReqDto.getEmail());
+        emailRedis.deleteEmailInfo(signUpReqDto.getEmail());
 
         return ApiResponse.ok(201, "회원 가입 성공", null);
     }
