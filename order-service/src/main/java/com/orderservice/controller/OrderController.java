@@ -1,7 +1,6 @@
 package com.orderservice.controller;
 
 import com.common.utils.ParseRequestUtil;
-import com.orderservice.dto.order.OrderPreviewDto;
 import com.orderservice.dto.order.OrderReqDto;
 import com.orderservice.service.CancelService;
 import com.orderservice.service.OrderService;
@@ -11,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Random;
 
 @Slf4j
@@ -24,31 +24,17 @@ public class OrderController {
     private final ParseRequestUtil parseRequestUtil;
 
     // 바로 구매 전 정보 조회
-    @PostMapping("/direct/preview")
+    @PostMapping("/preview")
     public ResponseEntity<?> directOrderPreview(@RequestBody OrderReqDto orderReqDto, HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.directPurchasePreview(orderReqDto, userId));
+        return ResponseEntity.ok(orderService.directOrderPreview(orderReqDto, userId));
     }
 
-    // 바로 구매
-    @PostMapping("/direct/process")
-    public ResponseEntity<?> directOrder(@RequestBody OrderReqDto orderReqDto, HttpServletRequest request) {
-        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.directOrder(orderReqDto, userId));
-    }
-
-    // 장바구니 상품 구매 전 정보 조회
-    @GetMapping("/preview")
-    public ResponseEntity<?> getCartItems(HttpServletRequest request) {
-        Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.getOrderItemsFromCart(userId));
-    }
-
-    // 장바구니 상품 구매
+    // 주문 하기
     @PostMapping("/process")
-    public ResponseEntity<?> order(@RequestBody OrderPreviewDto orderPreviewDto, HttpServletRequest request) {
+    public ResponseEntity<?> directOrder(@RequestBody List<OrderReqDto> orderReqDtos, HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.orderFromCart(orderPreviewDto, userId));
+        return ResponseEntity.ok(orderService.orderProcess(orderReqDtos, userId));
     }
 
     //주문 내역 보기
@@ -79,10 +65,10 @@ public class OrderController {
 
     //바로 주문 테스트용 엔드포인트
     @PostMapping("/process/test")
-    public ResponseEntity<?> orderTest(@RequestBody OrderPreviewDto orderPreviewDto) {
+    public ResponseEntity<?> orderTest(@RequestBody List<OrderReqDto> orderReqDtos) {
         Random random = new Random();
         Long userId = (long) (random.nextInt(1000) + 1);
-        return ResponseEntity.ok(orderService.orderFromCart(orderPreviewDto, userId));
+        return ResponseEntity.ok(orderService.orderProcess(orderReqDtos, userId));
     }
 
 }

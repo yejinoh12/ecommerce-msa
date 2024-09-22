@@ -4,7 +4,6 @@ import com.common.dto.order.AvailCheckReqDto;
 import com.common.dto.order.AvailCheckResDto;
 import com.common.dto.order.UpdateStockReqDto;
 import com.common.dto.payment.PaymentReqDto;
-import com.common.dto.product.CartItemsDto;
 import com.common.dto.user.AddressResDto;
 import com.common.dto.user.UserInfoDto;
 import com.common.exception.BaseBizException;
@@ -37,15 +36,13 @@ public class OrderService {
 
     private final ProductServiceClient productServiceClient;
     private final UserServiceClient userServiceClient;
-
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-
     private final KafkaProducer kafkaProducer;
     private final RedisStockService redisStockService;
 
     //바로 구매 전 정보 확인
-    public ApiResponse<OrderReqDto> directPurchasePreview(OrderReqDto orderReqDto, Long userId) {
+    public ApiResponse<OrderReqDto> directOrderPreview(OrderReqDto orderReqDto, Long userId) {
 
         //이벤트 시간 및 재고 검증 DTO
         AvailCheckReqDto availCheckReqDto =
@@ -76,83 +73,27 @@ public class OrderService {
         return new ApiResponse<>(201, "결제를 진행해주세요.", orderReqDto);
     }
 
-    //바로 구매
     @Transactional
-    public ApiResponse<OrderResDto> directOrder(OrderReqDto orderReqDto, Long userId) {
+    public ApiResponse<OrderResDto> orderProcess(List<OrderReqDto> orderRequests, Long userId) {
 
-        //레디스 재고 감소
-        redisStockService.decreaseStockWithLock(orderReqDto.getProductId(), orderReqDto.getCnt());
+        // 총 가격
+        int totalPrice = 0;
 
-        //최종 가격 계산
-        int totalPrice = orderReqDto.getUnitPrice() * orderReqDto.getCnt();
-
-        //주문 생성
-        Order order = createAndSaveOrder(orderReqDto, userId, totalPrice);
-
-        //주문 아이템 생성
-        createOrderItems(order, orderReqDto);
-
-        //재고 감소 상품 리스트
-        List<UpdateStockReqDto> products = new ArrayList<>();
-        products.add(new UpdateStockReqDto(orderReqDto.getProductId(), orderReqDto.getCnt()));
-
-        // 결제 요청
-        PaymentReqDto paymentRequest = new PaymentReqDto(order.getId(), totalPrice, products);
-        kafkaProducer.sendPaymentRequest(paymentRequest);
-
-        return new ApiResponse<>(201, "주문 요청 완료", OrderResDto.from(order));
-    }
-
-
-    //주문 전 장바구니 조회
-    public ApiResponse<OrderPreviewDto> getOrderItemsFromCart(Long userId) {
-
-        log.info("주문 전 장바구니 조회 : 사용자 ID = {}", userId);
-
-        //장바구니에 있는 아이템 조회 요청
-        List<CartItemsDto> cartItemsDtos = productServiceClient.getOrderItems(userId);
-
-        //최종 가격 계산
-        int totalOrderPrice = cartItemsDtos.stream()
-                .mapToInt(cartItemsDto -> cartItemsDto.getUnitPrice() * cartItemsDto.getCnt())
-                .sum();
-
-        //배송지 정보 추가
-        AddressResDto addressResDto = userServiceClient.getDefaultAddress(userId);
-
-        //DTO 생성
-        OrderPreviewDto responseDto = OrderPreviewDto.builder()
-                .totalPrice(totalOrderPrice)
-                .addressResDto(addressResDto)
-                .orderReqItems(cartItemsDtos)
-                .build();
-
-        return new ApiResponse<>(201, "결제를 진행해주세요.", responseDto);
-    }
-
-    //주문
-    @Transactional
-    public ApiResponse<OrderResDto> orderFromCart(OrderPreviewDto orderReqDtos, Long userId) {
-
-        log.info("주문 처리 시작: 사용자 ID = {}", userId);
-
-        //레디스 재고 감소
-        for (CartItemsDto dto : orderReqDtos.getOrderReqItems()) {
+        // 레디스 재고 감소 및 총 가격 계산
+        for (OrderReqDto dto : orderRequests) {
             redisStockService.decreaseStockWithLock(dto.getProductId(), dto.getCnt());
+            totalPrice += dto.getUnitPrice() * dto.getCnt();
         }
 
-        //최종 가격 계산
-        int totalPrice = orderReqDtos.getTotalPrice();
+        // 주문 생성
+        Order order = createAndSaveOrder(userId, totalPrice, orderRequests.getFirst());
 
-        //주문 생성
-        Order order = createAndSaveOrder(orderReqDtos.getAddressResDto(), userId, totalPrice);
-
-        //주문 아이템 생성 및 재고 감소 상품 리스트 생성
+        // 주문 아이템 생성 및 재고 감소 상품 리스트 생성
         List<UpdateStockReqDto> products = new ArrayList<>();
 
-        for (CartItemsDto cartItemsDto : orderReqDtos.getOrderReqItems()) {
-            createOrderItems(order, cartItemsDto);
-            products.add(new UpdateStockReqDto(cartItemsDto.getProductId(), cartItemsDto.getCnt()));
+        for (OrderReqDto orderReqDto : orderRequests) {
+            createOrderItems(order, orderReqDto);
+            products.add(new UpdateStockReqDto(orderReqDto.getProductId(), orderReqDto.getCnt()));
         }
 
         // 결제 요청
@@ -162,8 +103,8 @@ public class OrderService {
         return new ApiResponse<>(201, "주문 요청 완료", OrderResDto.from(order));
     }
 
-    //주문 생성
-    private Order createAndSaveOrder(OrderReqDto orderReqDto, Long userId, int totalPrice) {
+    // 주문 생성
+    private Order createAndSaveOrder(Long userId, int totalPrice, OrderReqDto orderReqDto) {
 
         Order order = Order.builder()
                 .userId(userId)
@@ -180,25 +121,7 @@ public class OrderService {
         return order;
     }
 
-    //장바구니 주문
-    private Order createAndSaveOrder(AddressResDto addressResDto, Long userId, int totalPrice) {
-
-        Order order = Order.builder()
-                .userId(userId)
-                .totalPrice(totalPrice)
-                .orderStatus(OrderStatus.PAYMENT_IN_PROGRESS)
-                .deliveryStatus(DeliveryStatus.PENDING)
-                .addressAlias(addressResDto.getAlias())
-                .address(addressResDto.getAddress())
-                .detailAddress(addressResDto.getDetailAddress())
-                .phone(addressResDto.getPhone())
-                .build();
-
-        orderRepository.save(order);
-        return order;
-    }
-
-    //주문 아이템 생성
+    // 주문 아이템 생성
     private void createOrderItems(Order order, OrderReqDto orderReqDto) {
 
         OrderItem orderItem = OrderItem.createOrderItem(
@@ -207,20 +130,6 @@ public class OrderService {
                 orderReqDto.getName(),
                 orderReqDto.getUnitPrice(),
                 orderReqDto.getCnt()
-        );
-
-        orderItemRepository.save(orderItem);
-    }
-
-    //주문 아이템 생성
-    private void createOrderItems(Order order, CartItemsDto cartItemsDto) {
-
-        OrderItem orderItem = OrderItem.createOrderItem(
-                order,
-                cartItemsDto.getProductId(),
-                cartItemsDto.getName(),
-                cartItemsDto.getUnitPrice(),
-                cartItemsDto.getCnt()
         );
 
         orderItemRepository.save(orderItem);

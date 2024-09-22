@@ -47,18 +47,25 @@ public class CartController {
 
     //장바구니 조회
     @GetMapping
-    public ResponseEntity<?> getMyCart(HttpServletRequest request) {
+    public ResponseEntity<?> viewCartItems(HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
-        return ResponseEntity.ok(cartService.getMyCart(userId));
+        return ResponseEntity.ok(cartService.viewCartItems(userId));
     }
 
-    //장바구니 조회
+    //장바구니 주문
+    @GetMapping("/order")
+    public ResponseEntity<?> orderCartItems(HttpServletRequest request) {
+        Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
+        return ResponseEntity.ok(cartService.orderCartItems(userId));
+    }
+
+    //주문 서비스에서 장바구니 조회
     @GetMapping("/get-items")
     public ResponseEntity<?> getCartItems(@RequestHeader("X-Claim-userId") Long userId) {
         return ResponseEntity.ok(cartService.getCartItemsForOrder(userId));
     }
 
-    //장바구니 삭제
+    //주문서비스에서 장바구니 삭제
     @GetMapping("/clear/after-order")
     public ResponseEntity<?> clearCartAfterOrder(@RequestHeader("X-Claim-userId") Long userId) {
         return ResponseEntity.ok(cartService.clearCart(userId));

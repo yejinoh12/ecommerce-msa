@@ -33,7 +33,7 @@ public class StockService {
         Long productId = updateStockReqDto.getProductId();
         int quantity = updateStockReqDto.getCnt();
 
-        Product product = productRepository.findById(productId)
+        Product product = productRepository.findByIdWithPessimisticLock(productId)
                 .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + productId));
 
         product.decreaseStock(quantity);

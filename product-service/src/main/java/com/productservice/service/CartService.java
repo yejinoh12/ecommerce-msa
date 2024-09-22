@@ -1,8 +1,11 @@
 package com.productservice.service;
 
 import com.common.dto.product.CartItemsDto;
+import com.common.dto.user.AddressResDto;
 import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
+import com.productservice.client.UserServiceClient;
+import com.productservice.dto.cart.CartOrderResDto;
 import com.productservice.entity.Cart;
 import com.productservice.entity.CartItem;
 import com.productservice.entity.Product;
@@ -30,6 +33,7 @@ public class CartService {
     private final ProductRepository productRepository;
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
+    private final UserServiceClient userServiceClient;
 
     // 장바구니 추가
     public ApiResponse<?> addCartItem(CartAddReqDto cartAddReqDto, Long userId) {
@@ -57,7 +61,7 @@ public class CartService {
                 .build();
 
         cartItemRepository.save(cartItem);
-        return getMyCart(userId);
+        return viewCartItems(userId);
     }
 
     // 장바구니에서 수량 증가
@@ -76,7 +80,7 @@ public class CartService {
         cartItem.addCount(1);
         cartItemRepository.save(cartItem);
 
-        return getMyCart(userId);
+        return viewCartItems(userId);
     }
 
     // 장바구니 수량 감소
@@ -94,7 +98,7 @@ public class CartService {
             cartItemRepository.delete(cartItem);
         }
 
-        return getMyCart(userId);
+        return viewCartItems(userId);
     }
 
     // 장바구니 전체 삭제
@@ -107,13 +111,15 @@ public class CartService {
 
     // 장바구니 조회
     @Transactional(readOnly = true)
-    public ApiResponse<CartResDto> getMyCart(Long userId) {
+    public ApiResponse<CartResDto> viewCartItems(Long userId) {
 
         Cart cart = getCart(userId);
 
-        List<CartItemResDto> cartItemResDtos = cartItemRepository.findByCartId(cart.getId()).stream()
+        List<CartItemResDto> cartItemResDtos =
+                cartItemRepository.findByCartId(cart.getId()).stream()
                 .map(item -> CartItemResDto.builder()
-                        .c_item_id(item.getId())
+                        .cartItemId(item.getId())
+                        .productId((item.getProduct().getId()))
                         .name(item.getProduct().getName())
                         .unitPrice(item.getProduct().getPrice())
                         .quantity(item.getCount())
@@ -137,10 +143,34 @@ public class CartService {
         return ApiResponse.ok(200, "장바구니 조회 성공", cartResDto);
     }
 
+    //주문 전 장바구니 조회
+    public ApiResponse<List<CartOrderResDto>> orderCartItems(Long userId){
+
+        // 장바구니 조회
+        CartResDto cartResDto = viewCartItems(userId).getData();
+
+        // 주소 정보 조회
+        AddressResDto address = userServiceClient.getDefaultAddress(userId);
+
+        // 주문 요청 DTO 생성
+        List<CartOrderResDto> orderReqDtos = cartResDto.getItems().stream()
+                .map(item -> CartOrderResDto.builder()
+                        .productId(item.getProductId())
+                        .name(item.getName())
+                        .unitPrice(item.getUnitPrice())
+                        .cnt(item.getQuantity())
+                        .addrAlias(address.getAlias())
+                        .address(address.getAddress())
+                        .addrDetail(address.getDetailAddress())
+                        .phone(address.getDetailAddress())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ApiResponse.ok(200, "결제를 진행해주세요", orderReqDtos);
+    }
+
     //주문 서비스에서 장바구니 조회
     public List<CartItemsDto> getCartItemsForOrder(Long userId) {
-
-        log.info("주문 서비스 장바구니 조회 요청, userId={}", userId);
 
         Cart cart = getCart(userId);
 

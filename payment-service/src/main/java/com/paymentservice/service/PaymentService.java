@@ -20,7 +20,7 @@ public class PaymentService {
     public PaymentResDto processPayment(PaymentReqDto paymentReqDto) {
 
         //결제 결과
-        boolean success = simulatePaymentError();
+        boolean success = true;
 
         // 결제 결과 전송
         PaymentResDto paymentResDto = new PaymentResDto(paymentReqDto.getOrderId(), success);
@@ -37,11 +37,4 @@ public class PaymentService {
 
         return paymentResDto;
     }
-
-    //결제 실패 시뮬레이션
-    private boolean simulatePaymentError() {
-        return true;
-        //return Math.random() < 0.2;
-    }
-
 }
