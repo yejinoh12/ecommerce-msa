@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class OrderResDto {
 
     private Long orderId;

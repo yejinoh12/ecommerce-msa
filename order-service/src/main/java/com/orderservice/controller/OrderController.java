@@ -1,12 +1,14 @@
 package com.orderservice.controller;
 
 import com.common.utils.ParseRequestUtil;
+import com.orderservice.dto.order.OrderItemDto;
 import com.orderservice.dto.order.OrderReqDto;
 import com.orderservice.service.CancelService;
 import com.orderservice.service.OrderService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,16 +27,16 @@ public class OrderController {
 
     // 바로 구매 전 정보 조회
     @PostMapping("/preview")
-    public ResponseEntity<?> directOrderPreview(@RequestBody OrderReqDto orderReqDto, HttpServletRequest request) {
+    public ResponseEntity<?> directOrderPreview(@RequestBody OrderItemDto orderItemDto, HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.directOrderPreview(orderReqDto, userId));
+        return ResponseEntity.ok(orderService.orderPreview(orderItemDto, userId));
     }
 
     // 주문 하기
     @PostMapping("/process")
-    public ResponseEntity<?> directOrder(@RequestBody List<OrderReqDto> orderReqDtos, HttpServletRequest request) {
+    public ResponseEntity<?> directOrder(@RequestBody OrderReqDto orderReqDto, HttpServletRequest request) {
         Long userId = parseRequestUtil.extractUserIdFromRequest(request);
-        return ResponseEntity.ok(orderService.orderProcess(orderReqDtos, userId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(orderService.orderProcess(orderReqDto, userId));
     }
 
     //주문 내역 보기
@@ -65,10 +67,10 @@ public class OrderController {
 
     //바로 주문 테스트용 엔드포인트
     @PostMapping("/process/test")
-    public ResponseEntity<?> orderTest(@RequestBody List<OrderReqDto> orderReqDtos) {
+    public ResponseEntity<?> orderTest(@RequestBody OrderReqDto orderReqDto) {
         Random random = new Random();
         Long userId = (long) (random.nextInt(1000) + 1);
-        return ResponseEntity.ok(orderService.orderProcess(orderReqDtos, userId));
+        return ResponseEntity.ok(orderService.orderProcess(orderReqDto, userId));
     }
 
 }

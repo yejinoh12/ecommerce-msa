@@ -8,6 +8,6 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class AvailCheckResDto {
-    private boolean hasStock; // 재고가 있는지 여부
+    private boolean hasStock;       // 재고가 있는지 여부
     private boolean isInSalePeriod; // 판매 시간 내에 있는지 여부
 }

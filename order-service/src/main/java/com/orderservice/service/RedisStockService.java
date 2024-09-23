@@ -45,39 +45,31 @@ public class RedisStockService {
     }
 
     //재고 감소
+    @Transactional
     public void decreaseStockWithLock(Long productId, int quantity) {
 
-        String lockKey = "lock:" + productId.toString(); // 락 키
-        RLock lock = redissonClient.getLock(lockKey);
+        String lockKey = "lock:" + productId.toString();
+
+        //선착순 보장을 위해 공정락 사용
+        RLock lock = redissonClient.getFairLock(lockKey);
+        lock.lock();
 
         try {
 
-            //락 획득 시도
-            boolean available = lock.tryLock(10, 5, TimeUnit.SECONDS);
-            if (!available) {
-                log.warn("Lock 획득 실패: productId={}", productId);
-            }
-
-            log.warn("Lock 획득 성공: productId={}", productId);
-
-            //재고 감소
-            String key = STOCK_CACHE_KEY_PREFIX + productId;
             int currentStock = getProductStock(productId);
 
             if (currentStock < quantity) {
                 throw new BaseBizException("재고 부족으로 주문에 실패했습니다.");
             }
 
+            String key = STOCK_CACHE_KEY_PREFIX + productId;
             redisTemplate.opsForValue().set(key, String.valueOf(currentStock - quantity));
-            log.info("상품 ID {} 재고 감소 {}->{} ", productId, currentStock, currentStock - quantity);
 
-        } catch (InterruptedException e) {
-            log.error("Lock 획득 중 오류 발생: productId={}", quantity, e);
-            Thread.currentThread().interrupt(); // 인터럽트 상태 복구
+            log.info("상품 ID {} 재고 감소, 현재 재고: {}", productId, currentStock - quantity);
 
         } finally {
-            if (lock.isLocked() && lock.isHeldByCurrentThread()) { //락을 점유한 스레드만 해제 가능
-                log.info("Lock 해제: productId={}", productId);
+
+            if (lock.isHeldByCurrentThread()) {
                 lock.unlock();
             }
         }
@@ -86,9 +78,11 @@ public class RedisStockService {
     // 상품 재고 증가
     @Transactional
     public void increaseStock(Long productId, int quantity) {
+
         String cacheKey = STOCK_CACHE_KEY_PREFIX + productId;
         int currentStock = getProductStock(productId);
         redisTemplate.opsForValue().set(cacheKey, String.valueOf(currentStock + quantity));
-        log.info("상품 {} 재고가 {} 증가되었습니다. 현재 재고: {}", productId, quantity, currentStock + quantity);
+
+        log.info("상품 ID {} 재고 증가, 현재 재고: {}", productId, currentStock + quantity);
     }
 }
