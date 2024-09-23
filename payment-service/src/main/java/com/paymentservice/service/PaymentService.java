@@ -7,6 +7,7 @@ import com.paymentservice.client.OrderServiceClient;
 import com.paymentservice.kafka.KafkaProducer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,6 +18,7 @@ public class PaymentService {
 
     private final KafkaProducer kafkaProducer;
 
+    @Transactional
     public PaymentResDto processPayment(PaymentReqDto paymentReqDto) {
 
         //결제 결과

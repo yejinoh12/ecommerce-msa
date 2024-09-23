@@ -1,7 +1,7 @@
 package com.userservice.security;
 
 import com.common.exception.BaseBizException;
-import com.userservice.redis.BlacklistRedis;
+import com.userservice.redis.RedisBlacklistService;
 import com.userservice.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.FilterChain;
@@ -26,7 +26,7 @@ import java.io.IOException;
 public class JwtValidationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
-    private final BlacklistRedis blacklistRedis;
+    private final RedisBlacklistService redisBlacklistService;
     private final UserDetailsServiceImpl userDetailsService;
 
     @Override
@@ -41,7 +41,7 @@ public class JwtValidationFilter extends OncePerRequestFilter {
                 tokenValue = jwtUtil.substringToken(tokenValue);
 
                 // 블랙리스트 확인
-                if (blacklistRedis.isTokenBlacklisted(tokenValue)) {
+                if (redisBlacklistService.isTokenBlacklisted(tokenValue)) {
                     log.error("블랙리스트에 있는 액세스 토큰입니다.");
                     throw new BaseBizException("로그아웃된 사용자입니다.");
                 }

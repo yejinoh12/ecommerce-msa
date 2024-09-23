@@ -9,7 +9,7 @@ import java.time.Duration;
 
 @Service
 @RequiredArgsConstructor
-public class EmailRedis {
+public class RedisEmailService {
 
     private final StringRedisTemplate emailRedisTemplate;
     private static final String PREFIX = "email:";

@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
-public class BlacklistRedis {
+public class RedisBlacklistService {
 
     private final StringRedisTemplate blacklistRedisTemplate;
     private static final String TOKEN_BLACKLIST_PREFIX = "blacklist:";

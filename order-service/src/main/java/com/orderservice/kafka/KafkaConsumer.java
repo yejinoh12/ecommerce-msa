@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -48,14 +49,11 @@ public class KafkaConsumer {
             order.setOrderStatus(OrderStatus.PAYMENT_FAILED);
         }
 
-        //저장
         orderRepository.save(order);
     }
 
     @KafkaListener(topics = "stock-increase-topic", groupId = "product-group")
     public void listenStockIncreaseRequest(String payload) throws JsonProcessingException {
-
-        log.info("kafka message -> {}", payload);
 
         // 메시지 역직렬화
         List<UpdateStockReqDto> products =

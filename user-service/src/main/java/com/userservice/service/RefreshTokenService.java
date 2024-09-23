@@ -4,7 +4,7 @@ import com.common.exception.BaseBizException;
 import com.common.response.ApiResponse;
 import com.userservice.dto.TokenResDto;
 import com.userservice.entity.UserRoleEnum;
-import com.userservice.redis.RefreshTokeRedis;
+import com.userservice.redis.RedisRefreshTokenService;
 import com.userservice.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +20,7 @@ import org.springframework.util.StringUtils;
 public class RefreshTokenService {
 
     private final JwtUtil jwtUtil;
-    private final RefreshTokeRedis refreshTokenService;
+    private final RedisRefreshTokenService refreshTokenService;
 
     public ApiResponse<TokenResDto> refreshAccessToken(HttpServletRequest request, HttpServletResponse response){
 

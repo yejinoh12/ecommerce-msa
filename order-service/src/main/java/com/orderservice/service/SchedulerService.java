@@ -30,7 +30,7 @@ public class SchedulerService {
     private final ProductServiceClient productServiceClient;
     private final RedisStockService redisStockService;
 
-    @Scheduled(cron = "0/24 * * * * ?") // 매 24초마다 실행
+    @Scheduled(cron = "0 0 0 * * ?") // 매일 자정에 실행
     @Transactional
     public void updateDeliveryStatuses() {
         LocalDateTime now = LocalDateTime.now();
@@ -47,14 +47,20 @@ public class SchedulerService {
     //반품상태 변경(반품진행 -> 반품완료) & 재고 복구
     private void updateReturnStatus(LocalDateTime now) {
 
-        List<Order> returnedOrders = orderRepository.findByOrderStatus(OrderStatus.RETURN_REQ); // 반품 진행 중인 상품을 가져옴
-        List<Long> orderIds = new ArrayList<>();                                                // 반품 요청된 주문 ID를 담을 리스트
+        // 반품 진행 중인 상품 조회
+        List<Order> returnedOrders = orderRepository.findByOrderStatus(OrderStatus.RETURN_REQ);
+
+        // 반품 요청된 주문 ID를 담을 리스트
+        List<Long> orderIds = new ArrayList<>();
 
         for (Order order : returnedOrders) {
-            LocalDateTime returnDeadline = order.getModifiedAt().plusSeconds(RETURN_DEADLINE);  //반품일 + 1일 후에 재고 변경
+
+            //반품일 + 1일 후에 재고 변경
+            LocalDateTime returnDeadline = order.getModifiedAt().plusSeconds(RETURN_DEADLINE);
+
             if (now.isAfter(returnDeadline)) {
                 orderIds.add(order.getId());
-                order.updateStatusToReturned(); //상태를 환불완료로 변경
+                order.updateStatusToReturned();
                 orderRepository.save(order);
             }
         }

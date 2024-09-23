@@ -33,17 +33,4 @@ public class KafkaConsumer {
             stockService.decreaseDBStock(updateStockReqDto);
         }
     }
-
-    @KafkaListener(topics = "stock-increase-topic", groupId = "product-group")
-    public void listenStockIncreaseRequest(String payload) throws JsonProcessingException {
-
-        // 메시지 역직렬화
-        List<UpdateStockReqDto> updateStockReqDtos =
-                objectMapper.readValue(payload, new TypeReference<List<UpdateStockReqDto>>() {});
-
-        // 각 항목에 대해 재고 증가 처리
-        for (UpdateStockReqDto updateStockReqDto : updateStockReqDtos) {
-            stockService.increaseDBStock(updateStockReqDto);
-        }
-    }
 }

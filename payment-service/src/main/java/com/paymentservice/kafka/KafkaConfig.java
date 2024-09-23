@@ -20,6 +20,8 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.springframework.boot.autoconfigure.kafka.KafkaProperties.IsolationLevel.READ_COMMITTED;
+
 @EnableKafka
 @Configuration
 public class KafkaConfig {
@@ -48,6 +50,7 @@ public class KafkaConfig {
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "payment-group");
         configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.ISOLATION_LEVEL_CONFIG, READ_COMMITTED);
         return new DefaultKafkaConsumerFactory<>(configProps);
     }
 }

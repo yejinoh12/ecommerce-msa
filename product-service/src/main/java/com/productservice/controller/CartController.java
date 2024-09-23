@@ -26,14 +26,16 @@ public class CartController {
 
     //장바구니 상품 수량 증가
     @GetMapping("/increase/{cartItemId}")
-    public ResponseEntity<?> incrementCartItem(@PathVariable("cartItemId") Long cartItemId, HttpServletRequest request) {
+    public ResponseEntity<?> incrementCartItem(@PathVariable("cartItemId") Long cartItemId,
+                                               HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
         return ResponseEntity.ok(cartService.incrementCartItem(cartItemId, userId));
     }
 
     //장바구니 상품 수량 감소
     @GetMapping("/decrease/{cartItemId}")
-    public ResponseEntity<?> decrementCartItem(@PathVariable("cartItemId") Long cartItemId, HttpServletRequest request) {
+    public ResponseEntity<?> decrementCartItem(@PathVariable("cartItemId") Long cartItemId,
+                                               HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
         return ResponseEntity.ok(cartService.decreaseCartItem(cartItemId, userId));
     }
@@ -52,7 +54,7 @@ public class CartController {
         return ResponseEntity.ok(cartService.viewCartItems(userId));
     }
 
-    //장바구니 주문
+    //장바구니 상품 주문
     @GetMapping("/order")
     public ResponseEntity<?> orderCartItems(HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);

@@ -1,7 +1,7 @@
 package com.userservice.security;
 
-import com.userservice.redis.BlacklistRedis;
-import com.userservice.redis.RefreshTokeRedis;
+import com.userservice.redis.RedisBlacklistService;
+import com.userservice.redis.RedisRefreshTokenService;
 import com.userservice.util.JwtUtil;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,8 +21,8 @@ import java.io.IOException;
 public class LogoutFilter implements LogoutHandler, LogoutSuccessHandler {
 
     private final JwtUtil jwtUtil;
-    private final RefreshTokeRedis refreshTokeRedis;
-    private final BlacklistRedis blacklistRedis;
+    private final RedisRefreshTokenService redisRefreshTokenService;
+    private final RedisBlacklistService redisBlacklistService;
 
     @Override
     public void logout(HttpServletRequest request, HttpServletResponse response, Authentication authentication) {
@@ -31,7 +31,7 @@ public class LogoutFilter implements LogoutHandler, LogoutSuccessHandler {
         String accessToken = request.getHeader("Authorization");
         accessToken = jwtUtil.substringToken(accessToken);
         long accessTokenExpirationTime = jwtUtil.getAccessTokenExpirationTime(accessToken);
-        blacklistRedis.addTokenToBlacklist(accessToken, accessTokenExpirationTime);
+        redisBlacklistService.addTokenToBlacklist(accessToken, accessTokenExpirationTime);
 
         // 2. 리프레시 토큰을 쿠키에서 삭제
         jwtUtil.clearRefreshTokenFromCookie(response);
@@ -39,7 +39,7 @@ public class LogoutFilter implements LogoutHandler, LogoutSuccessHandler {
         // 3. 리프레시 토큰을 레디스에서 삭제
         Claims info = jwtUtil.getClaimFromToken(accessToken);
         String userId = info.get("userId", String.class);
-        refreshTokeRedis.deleteRefreshToken(userId);
+        redisRefreshTokenService.deleteRefreshToken(userId);
     }
 
     @Override

@@ -2,10 +2,11 @@
 
 ##  E-commerce MSA Project
 
+- [API 문서 바로가기](https://documenter.getpostman.com/view/36704792/2sAXjRVpGJ)
 
 * **2024년 8월 ~ 2024년 9월 / 1인 프로젝트**
 
-- 이 프로젝트는 **특정 시간대에 오픈된 선착순 상품 구매가 원활하게 이루어지도록 설계된 E-commerce 서비스** 입니다. 마이크로 서비스 아키텍처를 채택하여 각 서비스의 확장성과 독립성을 높였고, 동시성 문제와 대규모 트래픽을 효과적으로 처리하기 위한 기술적 고민과 선택이 반영되었습니다.
+- 이 프로젝트는 **일반 상품 뿐만 아니라 특정 시간대에 오픈된 선착순 상품 구매가 원활하게 이루어지도록 설계된 E-commerce 서비스** 입니다. 마이크로 서비스 아키텍처를 채택하여 각 서비스의 확장성과 독립성을 높였고, 동시성 문제와 대규모 트래픽을 효과적으로 처리하기 위한 기술적 고민과 선택이 반영되었습니다.
 
 ## Tech Stack
 
@@ -18,7 +19,6 @@
 	-  Spring Cloud Gateway
 	-  Spring Cloud OpenFeign
 	-  JWT : 0.11.5
-
 - **Storage**
 	-   MySQL
 	-   Redis : 3.1.2
@@ -37,11 +37,7 @@
 ![image](img/architecture.png)
 
 
-### 3) API documentation
-
-- [API 문서 바로가기](https://documenter.getpostman.com/view/36704792/2sAXjRVpGJ)
-
-### 4) Main Feature
+### 3) Main Feature
 
 1.  **회원 관리 및 인증/인가 프로세스**
 
@@ -57,7 +53,12 @@
 		- 로그인 시 JWT Access Token과 Refresh Token 발급
 		- 만료된 Access Token은 Redis에 저장된 Refresh Token을 검증하여 재발급
 		- API Gateway에서 토큰을 검증하고, Claim에 포함된 유저 정보를 헤더에 추가하여 서비스 이용
-
+        - 로그아웃 시, 블랙리스트 등록을 통해 JWT 무효화
+	
+	- 배송지 정보 관리 기능
+      - 사용자는 여러 개의 배송지를 등록하고, 이 중 하나를 기본 배송지로 설정
+      - 주문 시 기본 배송지를 자동으로 사용
+      
 2.  **주문 및 재고 관리 프로세스**
 
 	- 주문 처리
@@ -77,6 +78,7 @@
 		- 배송 완료 후 1일 이내 반품이 가능하며, 반품 신청 후 1일 뒤에 재고 증가
 
 	- 그 외 구현 기능들
+    	- 상품 좋아요 기능
 		- 장바구니 추가/삭제 및 수량 증감 기능
 		- 카테고리 별 상품 목록 조회 및 상세 조회
 		- 주문 상세 조회

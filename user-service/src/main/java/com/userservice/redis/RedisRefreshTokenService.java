@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class RefreshTokeRedis {
+public class RedisRefreshTokenService {
 
     private final StringRedisTemplate refreshTokenRedisTemplate;
     protected static final String PREFIX = "refresh:";

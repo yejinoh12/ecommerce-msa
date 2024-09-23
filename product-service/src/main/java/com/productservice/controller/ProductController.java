@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @Slf4j
 @RestController
@@ -25,13 +24,13 @@ public class ProductController {
     //모든 상품 목록 조회
     @GetMapping
     public ResponseEntity<?> getAllProducts() {
-        return ResponseEntity.status(HttpStatus.OK).body(productService.getAllProducts());
+        return ResponseEntity.ok(productService.getAllProducts());
     }
 
     //구매 가능 상품 목록 조회
     @GetMapping("/avail")
     public ResponseEntity<?> getAvailProducts() {
-        return ResponseEntity.status(HttpStatus.OK).body(productService.getAvailProducts());
+        return ResponseEntity.ok(productService.getAvailProducts());
     }
 
     //상품 상세 조회
@@ -48,13 +47,7 @@ public class ProductController {
         return ResponseEntity.ok(productService.toggleLikeProduct(userId, productId));
     }
 
-    //주문 서비스에서 상품 정보 요청
-    @GetMapping("/info/{productId}")
-    public List<ProductInfoDto> getProductInfos(@PathVariable("productId") List<Long> productIds) {
-        return productService.getProductInfos(productIds);
-    }
-
-    //상품 구매 가능 여부 확인
+    //주문 서비스에서 상품 구매 가능 여부 확인
     @PostMapping("/purchase/validate")
     public AvailCheckResDto checkPurchaseAvailability(@RequestBody AvailCheckReqDto availCheckReqDto){
         return productService.validatePurchase(availCheckReqDto);

@@ -108,23 +108,6 @@ public class ProductService {
         }
     }
 
-    //주문 서비스에서 상품 정보 요청
-    public List<ProductInfoDto> getProductInfos(List<Long> productIds) {
-
-        List<Product> products = productRepository.findAllById(productIds);
-
-        if (products.isEmpty()) {
-            throw new BaseBizException("해당 상품 옵션 정보를 찾을 수 없습니다.");
-        }
-
-        return products.stream()
-                .map(product -> ProductInfoDto.builder()
-                        .productId(product.getId())
-                        .name(product.getName())
-                        .build())
-                .collect(Collectors.toList());
-    }
-
     //상품 구매 가능 여부 확인
     public AvailCheckResDto validatePurchase(AvailCheckReqDto availCheckReqDto) {
 
