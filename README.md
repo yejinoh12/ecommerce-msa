@@ -34,7 +34,7 @@
 
 
 ### 2) Project Architecture
-![image](img/architecture.png)
+![image](img/architecture.jpg)
 
 
 ### 3) Main Feature

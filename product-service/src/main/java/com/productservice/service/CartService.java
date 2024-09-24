@@ -85,7 +85,7 @@ public class CartService {
 
         //재고 검증
         Product product = cartItem.getProduct();
-        if (product.hasEnoughStock(cartItem.getCount() + 1)) {
+        if (!product.hasEnoughStock(cartItem.getCount() + 1)) {
             throw new BaseBizException("재고가 부족합니다. 현재 재고: " + product.getStock());
         }
 

@@ -25,7 +25,7 @@ public class CartController {
     }
 
     //장바구니 상품 수량 증가
-    @GetMapping("/increase/{cartItemId}")
+    @PutMapping("/increase/{cartItemId}")
     public ResponseEntity<?> incrementCartItem(@PathVariable("cartItemId") Long cartItemId,
                                                HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
@@ -33,7 +33,7 @@ public class CartController {
     }
 
     //장바구니 상품 수량 감소
-    @GetMapping("/decrease/{cartItemId}")
+    @PutMapping("/decrease/{cartItemId}")
     public ResponseEntity<?> decrementCartItem(@PathVariable("cartItemId") Long cartItemId,
                                                HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
@@ -41,7 +41,7 @@ public class CartController {
     }
 
     //장바구니 비우기
-    @GetMapping("/clear")
+    @DeleteMapping("/clear")
     public ResponseEntity<?> clearCart(HttpServletRequest request) {
         Long userId = new ParseRequestUtil().extractUserIdFromRequest(request);
         return ResponseEntity.ok(cartService.clearCart(userId));

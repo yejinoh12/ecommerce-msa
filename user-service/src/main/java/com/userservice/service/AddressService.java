@@ -107,6 +107,11 @@ public class AddressService {
             throw new BaseBizException("해당 배송지는 이 사용자의 것이 아닙니다.");
         }
 
+        // 기본 배송지인지 확인
+        if (address.isDefault()) {
+            throw new BaseBizException("기본 배송지는 삭제할 수 없습니다.");
+        }
+
         // 배송지 삭제
         addressRepository.delete(address);
 

@@ -7,6 +7,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class PreviewResDto {
-    OrderItemDto orderItem;
+    OrderItemDto item;
     AddressResDto address;
 }
