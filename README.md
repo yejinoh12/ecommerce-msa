@@ -33,8 +33,8 @@
 ![image](img/erd.png)
 
 
-### 2) Project Architecture
-![image](img/architecture.jpg)
+### 2) Architecture
+![image](img/architecture.png)
 
 
 ### 3) Main Feature
