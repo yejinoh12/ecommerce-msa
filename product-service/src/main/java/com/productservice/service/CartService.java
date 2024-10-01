@@ -16,6 +16,8 @@ import com.productservice.repository.CartRepository;
 import com.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreakerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +35,7 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final CartRepository cartRepository;
     private final UserServiceClient userServiceClient;
+    private final CircuitBreakerFactory circuitBreakerFactory;
 
     // 장바구니 추가
     @Transactional
@@ -181,7 +184,7 @@ public class CartService {
                 .address(address)
                 .build();
 
-        return ApiResponse.ok(200, "결제를 진행해주세요", orderReqDto);
+        return ApiResponse.ok(200, "결제를 진행해주세요.", orderReqDto);
     }
 
     //주문 서비스에서 장바구니 조회

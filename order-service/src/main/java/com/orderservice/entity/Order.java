@@ -31,9 +31,17 @@ public class Order extends BaseEntity {
     private DeliveryStatus deliveryStatus;
 
     //배송지 필드 추가
+
+    @Column(nullable = false)
     private String addressAlias;
+
+    @Column(nullable = false)
     private String address;
+
+    @Column(nullable = false)
     private String detailAddress;
+
+    @Column(nullable = false)
     private String phone;
 
 

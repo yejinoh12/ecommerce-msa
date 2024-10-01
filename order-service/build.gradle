@@ -61,6 +61,10 @@ dependencies {
     // Jackson Databind
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.0'
 
+    //resilience4j
+    implementation 'org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j'
+
+
 }
 
 dependencyManagement {

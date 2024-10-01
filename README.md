@@ -85,3 +85,6 @@
 		- 주문 취소 및 반품
 
 ## Trouble Shooting
+- [동시성 문제 해결 과정](https://stone-badge-5f2.notion.site/1122ab7afea180bc9fbbe4151612788c?pvs=4)
+- [JSON 변수명 인식 문제 해결과 JPA Boolean 타입 저장 방식](https://stone-badge-5f2.notion.site/JSON-JPA-Boolean-1122ab7afea180479afff2233d989516?pvs=4)
+- [결제 시 응답 시간 지연으로 인한 Kafka 도입](https://stone-badge-5f2.notion.site/3bd2e831e3c24086a0a12d6d77249c26?pvs=4)

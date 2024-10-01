@@ -21,5 +21,5 @@ public class AddressResDto {
     private String phone;
 
     @JsonProperty("isDefault")
-    private boolean isDefault;
+    private Boolean isDefault;
 }
